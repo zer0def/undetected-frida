@@ -87,7 +87,7 @@ index 380e8a32..d07f4588 100755
  priv_dir="$output_dir/frida-agent@emb"
  
  case $host_os in
-@@ -30,6 +31,10 @@ collect_generic_agent ()
+@@ -21,6 +22,10 @@ collect_generic_agent ()
    else
      touch "$embedded_agent"
    fi
@@ -98,7 +98,7 @@ index 380e8a32..d07f4588 100755
    embedded_agents+=("$embedded_agent")
  }
  
-@@ -62,6 +67,10 @@ case $host_os in
+@@ -53,6 +58,10 @@ case $host_os in
        exit 1
      fi
  
