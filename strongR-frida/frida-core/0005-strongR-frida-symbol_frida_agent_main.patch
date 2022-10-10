@@ -79,36 +79,35 @@ diff --git a/src/embed-agent.sh b/src/embed-agent.sh
 index 380e8a32..d07f4588 100755
 --- a/src/embed-agent.sh
 +++ b/src/embed-agent.sh
-@@ -9,6 +9,7 @@ host_os="$6"
- resource_compiler="$7"
- resource_config="$8"
+@@ -10,6 +10,8 @@ resource_compiler=$7
+ resource_config=$8
+ lipo=$9
  
 +custom_script="$output_dir/../../../../frida-core/src/anti-anti-frida.py"
++
  priv_dir="$output_dir/frida-agent@emb"
  
- case $host_os in
-@@ -21,6 +22,10 @@ collect_generic_agent ()
+ mkdir -p "$priv_dir"
+@@ -22,6 +24,9 @@ collect_generic_agent ()
    else
      touch "$embedded_agent"
    fi
 +  if [ -f "$custom_script" ]; then
 +    python3 "$custom_script" "$embedded_agent"
 +  fi
-+  
    embedded_agents+=("$embedded_agent")
  }
  
-@@ -53,6 +58,10 @@ case $host_os in
+@@ -53,6 +58,9 @@ case $host_os in
+       echo "An agent must be provided"
        exit 1
      fi
- 
 +    if [ -f "$custom_script" ]; then
 +      python3 "$custom_script" "$embedded_agent"
 +    fi
-+    
+ 
      exec "$resource_compiler" --toolchain=gnu -c "$resource_config" -o "$output_dir/frida-data-agent" "$embedded_agent"
      ;;
-   *)
 diff --git a/src/linux/linux-host-session.vala b/src/linux/linux-host-session.vala
 index 059e75a9..1221de64 100644
 --- a/src/linux/linux-host-session.vala
