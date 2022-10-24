@@ -1,7 +1,7 @@
 From 65976afd602808c55a5d832f469cd4db245a8304 Mon Sep 17 00:00:00 2001
 From: heyang <375525827@qq.com>
 Date: Mon, 24 Oct 2022 15:41:12 +0800
-Subject: [PATCH] test1
+Subject: [PATCH 5/8] strongR-frida: symbol_frida_agent_main
 
 ---
  src/agent-container.vala              |  2 +-
