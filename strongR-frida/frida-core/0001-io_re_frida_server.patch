@@ -30,7 +30,7 @@ index f336443a..20640918 100644
  #ifdef HAVE_ANDROID
    if (getuid () == 0)
 -    return g_strdup ("/data/local/tmp");
-+    return g_strdup ("/system/lib64");
++    return g_strdup ("/data/local/tmp");
  #endif
  
    return g_strdup (g_get_tmp_dir ());
