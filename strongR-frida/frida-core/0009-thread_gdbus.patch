@@ -1,0 +1,29 @@
+From 55290725aa7102bee9482deea2673acda254cba6 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Tue, 14 Feb 2023 20:57:34 +0800
+Subject: [PATCH 09/11] thread_gdbus
+
+---
+ src/anti-frida.py | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/src/anti-frida.py b/src/anti-frida.py
+index 3c9592fc..aaff50ce 100644
+--- a/src/anti-frida.py
++++ b/src/anti-frida.py
+@@ -37,4 +37,9 @@ if __name__ == "__main__":
+     # thread_gmain
+     random_name = "".join(random.sample("abcdefghijklmn", 5))
+     log_color(f"[*] Patch `gmain` to `{random_name}`")
+-    os.system(f"sed -b -i s/gmain/{random_name}/g {input_file}")
+\ No newline at end of file
++    os.system(f"sed -b -i s/gmain/{random_name}/g {input_file}")
++    
++    # thread_gdbus
++    random_name = "".join(random.sample("abcdefghijklmn", 5))
++    log_color(f"[*] Patch `gdbus` to `{random_name}`")
++    os.system(f"sed -b -i s/gdbus/{random_name}/g {input_file}")
+\ No newline at end of file
+-- 
+2.34.1
+

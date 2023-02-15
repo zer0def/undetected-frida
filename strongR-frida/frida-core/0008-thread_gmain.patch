@@ -1,0 +1,34 @@
+From ca8155a23abb55e06a4091d4ed8558021e5fce09 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Tue, 14 Feb 2023 20:57:16 +0800
+Subject: [PATCH 08/11] thread_gmain
+
+---
+ src/anti-frida.py | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/src/anti-frida.py b/src/anti-frida.py
+index b6ad98bb..3c9592fc 100644
+--- a/src/anti-frida.py
++++ b/src/anti-frida.py
+@@ -28,8 +28,13 @@ if __name__ == "__main__":
+             symbol.name = symbol.name.replace("FRIDA", random_name)
+     
+     binary.write(input_file)
+-    
++
+     # thread_gum_js_loop
+     random_name = "".join(random.sample("abcdefghijklmn", 11))
+     log_color(f"[*] Patch `gum-js-loop` to `{random_name}`")
+-    os.system(f"sed -b -i s/gum-js-loop/{random_name}/g {input_file}")
+\ No newline at end of file
++    os.system(f"sed -b -i s/gum-js-loop/{random_name}/g {input_file}")
++
++    # thread_gmain
++    random_name = "".join(random.sample("abcdefghijklmn", 5))
++    log_color(f"[*] Patch `gmain` to `{random_name}`")
++    os.system(f"sed -b -i s/gmain/{random_name}/g {input_file}")
+\ No newline at end of file
+-- 
+2.34.1
+

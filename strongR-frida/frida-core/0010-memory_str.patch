@@ -1,0 +1,44 @@
+From f35c3a4db13f885f5c9234cd1e68071377714f07 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Tue, 14 Feb 2023 20:58:35 +0800
+Subject: [PATCH 10/11] memory_str
+
+---
+ src/anti-frida.py | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/src/anti-frida.py b/src/anti-frida.py
+index aaff50ce..b990cf21 100644
+--- a/src/anti-frida.py
++++ b/src/anti-frida.py
+@@ -27,6 +27,18 @@ if __name__ == "__main__":
+         if "FRIDA" in symbol.name:
+             symbol.name = symbol.name.replace("FRIDA", random_name)
+     
++    all_patch_string = ["FridaScriptEngine", "GLib-GIO", "GDBusProxy", "GumScript"]  # 字符串特征修改 尽量与源字符一样
++    for section in binary.sections:
++        log_color(section.name)
++        if section.name != ".rodata":
++            continue
++        for patch_str in all_patch_string:
++            addr_all = section.search_all(patch_str)  # Patch 内存字符串
++            for addr in addr_all:
++                patch = [ord(n) for n in list(patch_str)[::-1]]
++                log_color(f"current section name={section.name} offset={hex(section.file_offset + addr)} {patch_str}-{''.join(list(patch_str)[::-1])}")
++                binary.patch_address(section.file_offset + addr, patch)
++    
+     binary.write(input_file)
+ 
+     # thread_gum_js_loop
+@@ -38,7 +50,7 @@ if __name__ == "__main__":
+     random_name = "".join(random.sample("abcdefghijklmn", 5))
+     log_color(f"[*] Patch `gmain` to `{random_name}`")
+     os.system(f"sed -b -i s/gmain/{random_name}/g {input_file}")
+-    
++
+     # thread_gdbus
+     random_name = "".join(random.sample("abcdefghijklmn", 5))
+     log_color(f"[*] Patch `gdbus` to `{random_name}`")
+-- 
+2.34.1
+

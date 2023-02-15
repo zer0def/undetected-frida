@@ -1,0 +1,50 @@
+From dd4fdd8bed80d1e15f49a8e731930172620e6cec Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Tue, 14 Feb 2023 20:54:15 +0800
+Subject: [PATCH 06/11] PythonScript: anti-frida.py
+
+---
+ src/anti-frida.py | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+ create mode 100644 src/anti-frida.py
+
+diff --git a/src/anti-frida.py b/src/anti-frida.py
+new file mode 100644
+index 00000000..143996c5
+--- /dev/null
++++ b/src/anti-frida.py
+@@ -0,0 +1,30 @@
++import lief
++import sys
++import random
++import os
++
++def log_color(msg):
++    print(f"\033[1;31;40m{msg}\033[0m")
++
++if __name__ == "__main__":
++    input_file = sys.argv[1]
++    log_color(f"[*] Patch frida-agent: {input_file}")
++    random_name = "".join(random.sample("ABCDEFGHIJKLMNO", 5)) # generate random "frida-agent-arm/64.so" name
++    log_color(f"[*] Patch `frida` to `{random_name}``")
++
++    binary = lief.parse(input_file)
++
++    if not binary:
++        exit()
++
++    for symbol in binary.symbols:  # 修改符号名
++        if symbol.name == "frida_agent_main":
++            symbol.name = "main"
++
++        if "frida" in symbol.name:
++            symbol.name = symbol.name.replace("frida", random_name)
++
++        if "FRIDA" in symbol.name:
++            symbol.name = symbol.name.replace("FRIDA", random_name)
++    
++    binary.write(input_file)
+\ No newline at end of file
+-- 
+2.34.1
+

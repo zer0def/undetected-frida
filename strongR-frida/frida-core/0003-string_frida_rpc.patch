@@ -1,7 +1,7 @@
-From 0874adb5e0e53d90da56e542053b9f14adccfb1a Mon Sep 17 00:00:00 2001
-From: hluwa <hluwa888@gmail.com>
-Date: Mon, 16 Aug 2021 10:55:11 +0800
-Subject: [PATCH 1/8] strongR-frida: string_frida_rpc
+From 0596043d04d5d313b4d212b167c48b7437899b55 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Tue, 14 Feb 2023 20:45:39 +0800
+Subject: [PATCH 03/11] string_frida_rpc
 
 ---
  lib/base/rpc.vala | 6 +++---
@@ -39,5 +39,5 @@ index 3695ba8c..02602abf 100644
  
  			var request_id_value = rpc_message.get_element (1);
 -- 
-2.30.2
+2.34.1
 
