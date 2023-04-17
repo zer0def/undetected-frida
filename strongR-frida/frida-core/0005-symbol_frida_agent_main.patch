@@ -22,7 +22,7 @@ index a8db6b29..4a02a823 100644
  
  			void * main_func_symbol;
 -			var main_func_found = container.module.symbol ("frida_agent_main", out main_func_symbol);
-+			var main_func_found = container.module.symbol (main, out main_func_symbol);
++			var main_func_found = container.module.symbol ("main", out main_func_symbol);
  			assert (main_func_found);
  			container.main_impl = (AgentMainFunc) main_func_symbol;
  
@@ -35,7 +35,7 @@ index 2e9c010b..ddc7f023 100644
  			uint id;
  
 -			unowned string entrypoint = "frida_agent_main";
-+			unowned string entrypoint = main;
++			unowned string entrypoint = "main";
  #if HAVE_EMBEDDED_ASSETS
  			id = yield fruitjector.inject_library_resource (pid, agent, entrypoint, agent_parameters, cancellable);
  #else
@@ -48,7 +48,7 @@ index a2204a4e..c84bb9bf 100644
  			var stream_request = Pipe.open (t.local_address, cancellable);
  
 -			var id = yield binjector.inject_library_resource (pid, agent_desc, "frida_agent_main",
-+			var id = yield binjector.inject_library_resource (pid, agent_desc, main,
++			var id = yield binjector.inject_library_resource (pid, agent_desc, "main",
  				make_agent_parameters (pid, t.remote_address, options), cancellable);
  			injectee_by_pid[pid] = id;
  
@@ -61,7 +61,7 @@ index 052a63b6..0ead0c29 100644
  				Cancellable? cancellable, out Object? transport) throws Error, IOError {
  			uint id;
 -			string entrypoint = "frida_agent_main";
-+			string entrypoint = main;
++			string entrypoint = "main";
  			string parameters = make_agent_parameters (pid, "", options);
  			AgentFeatures features = CONTROL_CHANNEL;
  			var linjector = (Linjector) injector;
@@ -74,7 +74,7 @@ index 69f2995f..5a94427d 100644
  			var stream_request = Pipe.open (t.local_address, cancellable);
  
 -			var id = yield qinjector.inject_library_resource (pid, agent_desc, "frida_agent_main",
-+			var id = yield qinjector.inject_library_resource (pid, agent_desc, main,
++			var id = yield qinjector.inject_library_resource (pid, agent_desc, "main",
  				make_agent_parameters (pid, t.remote_address, options), cancellable);
  			injectee_by_pid[pid] = id;
  
@@ -87,7 +87,7 @@ index 67f1f3ef..a1776df1 100644
  
  			var winjector = injector as Winjector;
 -			var id = yield winjector.inject_library_resource (pid, agent, "frida_agent_main",
-+			var id = yield winjector.inject_library_resource (pid, agent, main,
++			var id = yield winjector.inject_library_resource (pid, agent, "main",
  				make_agent_parameters (pid, t.remote_address, options), cancellable);
  			injectee_by_pid[pid] = id;
  
@@ -100,7 +100,7 @@ index 10bb0806..6ee7c54f 100644
  
  			void * main_func_symbol;
 -			var main_func_found = module.symbol ("frida_agent_main", out main_func_symbol);
-+			var main_func_found = module.symbol (main, out main_func_symbol);
++			var main_func_found = module.symbol ("main", out main_func_symbol);
  			assert_true (main_func_found);
  			main_impl = (AgentMainFunc) main_func_symbol;
  
@@ -113,7 +113,7 @@ index fb1facaf..3f18d2a3 100644
  				assert_true (FileUtils.test (path, FileTest.EXISTS));
  
 -				yield injector.inject_library_file (process.id, path, "frida_agent_main", data);
-+				yield injector.inject_library_file (process.id, path, main, data);
++				yield injector.inject_library_file (process.id, path, "main", data);
  			} catch (GLib.Error e) {
  				printerr ("\nFAIL: %s\n\n", e.message);
  				assert_not_reached ();
