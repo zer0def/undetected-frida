@@ -4,22 +4,21 @@ Date: Tue, 14 Feb 2023 20:44:15 +0800
 Subject: [PATCH 02/11] pipe_linjector
 
 ---
- src/linux/frida-helper-backend-glue.c | 2 +-
+ src/freebsd/binjector-glue.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/linux/frida-helper-backend-glue.c b/src/linux/frida-helper-backend-glue.c
-index 89c90fda..ed1c6e4a 100644
---- a/src/linux/frida-helper-backend-glue.c
-+++ b/src/linux/frida-helper-backend-glue.c
-@@ -1241,7 +1241,7 @@ frida_inject_instance_init_fifo (FridaInjectInstance * self)
+diff --git a/src/freebsd/binjector-glue.c b/src/freebsd/binjector-glue.c
+index 2bdce0ae..af5c76e4 100644
+--- a/src/freebsd/binjector-glue.c
++++ b/src/freebsd/binjector-glue.c
+@@ -805,7 +805,7 @@ frida_inject_instance_init_fifo (FridaInjectInstance * self)
  {
    const int mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
  
--  self->fifo_path = g_strdup_printf ("%s/linjector-%u", self->temp_path, self->id);
-+  self->fifo_path = g_strdup_printf ("%s/%p-%u", self->temp_path, self, self->id);
+-  self->fifo_path = g_strdup_printf ("%s/binjector-%u", self->temp_path, self->id);
++  self->fifo_path = g_strdup_printf ("%s/%p-%u", self->temp_path, self->id);
  
    mkfifo (self->fifo_path, mode);
    chmod (self->fifo_path, mode);
 -- 
-2.34.1
-
+2.39.2 (Apple Git-143)
