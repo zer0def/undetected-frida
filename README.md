@@ -5,17 +5,20 @@ Releases right next door, on the side panel →
 
 ## Patches
 
-|module|name|
-|-|-|
-|frida-core|0001-string_frida_rpc.patch|
-|frida-core|0002-io_re_frida_server.patch|
-|frida-core|0003-pipe_linjector.patch|
-|frida-core|0004-io_frida_agent_so.patch|
-|frida-core|0005-symbol_frida_agent_main.patch|
-|frida-core|0006-anti-anti-frida.py.patch|
-|frida-core|0007-threads.patch|
-|frida-core|0008-protocol_unexpected_command.patch|
-|frida-core|0009-memory_str.patch|
+|patchset|module|name|
+|-|-|-|
+|strongR-frida|frida-core|0001-string_frida_rpc.patch|
+|strongR-frida|frida-core|0002-io_re_frida_server.patch|
+|strongR-frida|frida-core|0003-pipe_linjector.patch|
+|strongR-frida|frida-core|0004-io_frida_agent_so.patch|
+|strongR-frida|frida-core|0005-symbol_frida_agent_main.patch|
+|strongR-frida|frida-core|0006-anti-anti-frida.py.patch|
+|strongR-frida|frida-core|0007-threads.patch|
+|strongR-frida|frida-core|0008-protocol_unexpected_command.patch|
+|strongR-frida|frida-core|0009-memory_str.patch|
+|florida|frida-core|0001-Florida-memfd-name-jit-cache.patch|
+|florida|frida-core|0002-Florida-pool-frida.patch|
+|florida|frida-gum|0001-Florida-pool-frida.patch|
 
 ## References
 
