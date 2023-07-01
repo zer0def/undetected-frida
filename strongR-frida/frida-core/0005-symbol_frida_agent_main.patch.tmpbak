@@ -1,24 +1,21 @@
-From 36f933383018c359a04d5772806d88ba686f4067 Mon Sep 17 00:00:00 2001
-From: Ylarod <me@ylarod.cn>
-Date: Tue, 18 Jul 2023 16:02:50 +0800
-Subject: [PATCH 04/10] Florida: symbol_frida_agent_main
+From 65976afd602808c55a5d832f469cd4db245a8304 Mon Sep 17 00:00:00 2001
+From: heyang <375525827@qq.com>
+Date: Mon, 24 Oct 2022 15:41:12 +0800
+Subject: [PATCH 5/8] strongR-frida: symbol_frida_agent_main
 
 ---
- src/agent-container.vala              |  2 +-
- src/anti-anti-frida.py                | 27 +++++++++++++++++++++++++++
- src/darwin/darwin-host-session.vala   |  2 +-
- src/embed-agent.sh                    |  8 ++++++++
- src/freebsd/freebsd-host-session.vala |  2 +-
- src/linux/linux-host-session.vala     |  2 +-
- src/qnx/qnx-host-session.vala         |  2 +-
- src/windows/windows-host-session.vala |  2 +-
- tests/test-agent.vala                 |  2 +-
- tests/test-injector.vala              |  2 +-
- 10 files changed, 43 insertions(+), 8 deletions(-)
- create mode 100644 src/anti-anti-frida.py
+ src/agent-container.vala              | 2 +-
+ src/darwin/darwin-host-session.vala   | 2 +-
+ src/freebsd/freebsd-host-session.vala | 2 +-
+ src/linux/linux-host-session.vala     | 2 +-
+ src/qnx/qnx-host-session.vala         | 2 +-
+ src/windows/windows-host-session.vala | 2 +-
+ tests/test-agent.vala                 | 2 +-
+ tests/test-injector.vala              | 2 +-
+ 8 files changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/src/agent-container.vala b/src/agent-container.vala
-index a8db6b29..afe514cb 100644
+index a8db6b29..4a02a823 100644
 --- a/src/agent-container.vala
 +++ b/src/agent-container.vala
 @@ -25,7 +25,7 @@ namespace Frida {
@@ -30,45 +27,11 @@ index a8db6b29..afe514cb 100644
  			assert (main_func_found);
  			container.main_impl = (AgentMainFunc) main_func_symbol;
  
-diff --git a/src/anti-anti-frida.py b/src/anti-anti-frida.py
-new file mode 100644
-index 00000000..a203189f
---- /dev/null
-+++ b/src/anti-anti-frida.py
-@@ -0,0 +1,27 @@
-+import lief
-+import sys
-+import random
-+import os
-+
-+if __name__ == "__main__":
-+    input_file = sys.argv[1]
-+    print(f"[*] Patch frida-agent: {input_file}")
-+    random_name = "".join(random.sample("ABCDEFGHIJKLMNO", 5))
-+    print(f"[*] Patch `frida` to `{random_name}``")
-+
-+    binary = lief.parse(input_file)
-+
-+    if not binary:
-+        exit()
-+
-+    for symbol in binary.symbols:
-+        if symbol.name == "frida_agent_main":
-+            symbol.name = "main"
-+        
-+        if "frida" in symbol.name:
-+            symbol.name = symbol.name.replace("frida", random_name)
-+
-+        if "FRIDA" in symbol.name:
-+            symbol.name = symbol.name.replace("FRIDA", random_name)
-+
-+    binary.write(input_file)
-\ No newline at end of file
 diff --git a/src/darwin/darwin-host-session.vala b/src/darwin/darwin-host-session.vala
-index ab9b2900..4369922d 100644
+index 2e9c010b..ddc7f023 100644
 --- a/src/darwin/darwin-host-session.vala
 +++ b/src/darwin/darwin-host-session.vala
-@@ -381,7 +381,7 @@ namespace Frida {
+@@ -354,7 +354,7 @@ namespace Frida {
  		private async uint inject_agent (uint pid, string agent_parameters, Cancellable? cancellable) throws Error, IOError {
  			uint id;
  
@@ -77,41 +40,8 @@ index ab9b2900..4369922d 100644
  #if HAVE_EMBEDDED_ASSETS
  			id = yield fruitjector.inject_library_resource (pid, agent, entrypoint, agent_parameters, cancellable);
  #else
-diff --git a/src/embed-agent.sh b/src/embed-agent.sh
-index 6a3bf9ed..e6a69e41 100755
---- a/src/embed-agent.sh
-+++ b/src/embed-agent.sh
-@@ -12,6 +12,7 @@ lipo=$9
- agent_dbghelp_prefix=${10}
- agent_symsrv_prefix=${11}
- 
-+custom_script="$output_dir/../../../../frida-core/src/anti-anti-frida.py"
- priv_dir="$output_dir/frida-agent@emb"
- 
- mkdir -p "$priv_dir"
-@@ -41,6 +42,9 @@ collect_unix_agent ()
-   else
-     touch "$embedded_agent"
-   fi
-+  if [ -f "$custom_script" ]; then
-+    python3 "$custom_script" "$embedded_agent"
-+  fi
-   embedded_assets+=("$embedded_agent")
- }
- 
-@@ -81,6 +85,10 @@ case $host_os in
-       exit 1
-     fi
- 
-+    if [ -f "$custom_script" ]; then
-+      python3 "$custom_script" "$embedded_agent"
-+    fi
-+
-     exec "$resource_compiler" --toolchain=gnu -c "$resource_config" -o "$output_dir/frida-data-agent" "$embedded_agent"
-     ;;
-   *)
 diff --git a/src/freebsd/freebsd-host-session.vala b/src/freebsd/freebsd-host-session.vala
-index a2204a4e..eac16116 100644
+index a2204a4e..c84bb9bf 100644
 --- a/src/freebsd/freebsd-host-session.vala
 +++ b/src/freebsd/freebsd-host-session.vala
 @@ -197,7 +197,7 @@ namespace Frida {
@@ -124,10 +54,10 @@ index a2204a4e..eac16116 100644
  			injectee_by_pid[pid] = id;
  
 diff --git a/src/linux/linux-host-session.vala b/src/linux/linux-host-session.vala
-index 64245792..086d0b96 100644
+index 052a63b6..0ead0c29 100644
 --- a/src/linux/linux-host-session.vala
 +++ b/src/linux/linux-host-session.vala
-@@ -427,7 +427,7 @@ namespace Frida {
+@@ -426,7 +426,7 @@ namespace Frida {
  		protected override async Future<IOStream> perform_attach_to (uint pid, HashTable<string, Variant> options,
  				Cancellable? cancellable, out Object? transport) throws Error, IOError {
  			uint id;
@@ -137,7 +67,7 @@ index 64245792..086d0b96 100644
  			AgentFeatures features = CONTROL_CHANNEL;
  			var linjector = (Linjector) injector;
 diff --git a/src/qnx/qnx-host-session.vala b/src/qnx/qnx-host-session.vala
-index 69f2995f..a4e59ab2 100644
+index 69f2995f..5a94427d 100644
 --- a/src/qnx/qnx-host-session.vala
 +++ b/src/qnx/qnx-host-session.vala
 @@ -182,7 +182,7 @@ namespace Frida {
@@ -150,7 +80,7 @@ index 69f2995f..a4e59ab2 100644
  			injectee_by_pid[pid] = id;
  
 diff --git a/src/windows/windows-host-session.vala b/src/windows/windows-host-session.vala
-index 67f1f3ef..518cd256 100644
+index 67f1f3ef..a1776df1 100644
 --- a/src/windows/windows-host-session.vala
 +++ b/src/windows/windows-host-session.vala
 @@ -274,7 +274,7 @@ namespace Frida {
@@ -163,7 +93,7 @@ index 67f1f3ef..518cd256 100644
  			injectee_by_pid[pid] = id;
  
 diff --git a/tests/test-agent.vala b/tests/test-agent.vala
-index 62fb8260..6e5eba51 100644
+index 10bb0806..6ee7c54f 100644
 --- a/tests/test-agent.vala
 +++ b/tests/test-agent.vala
 @@ -449,7 +449,7 @@ Interceptor.attach(Module.getExportByName('libsystem_kernel.dylib', 'open'), ()
@@ -176,10 +106,10 @@ index 62fb8260..6e5eba51 100644
  			main_impl = (AgentMainFunc) main_func_symbol;
  
 diff --git a/tests/test-injector.vala b/tests/test-injector.vala
-index f4a321c4..448bddf3 100644
+index fb1facaf..3f18d2a3 100644
 --- a/tests/test-injector.vala
 +++ b/tests/test-injector.vala
-@@ -258,7 +258,7 @@ namespace Frida.InjectorTest {
+@@ -257,7 +257,7 @@ namespace Frida.InjectorTest {
  				var path = Frida.Test.Labrats.path_to_library (name, arch);
  				assert_true (FileUtils.test (path, FileTest.EXISTS));
  
@@ -189,5 +119,4 @@ index f4a321c4..448bddf3 100644
  				printerr ("\nFAIL: %s\n\n", e.message);
  				assert_not_reached ();
 -- 
-2.39.3 (Apple Git-145)
-
+2.39.2 (Apple Git-143)

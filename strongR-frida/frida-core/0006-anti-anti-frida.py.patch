@@ -1,0 +1,39 @@
+From 65976afd602808c55a5d832f469cd4db245a8304 Mon Sep 17 00:00:00 2001
+From: heyang <375525827@qq.com>
+Date: Mon, 24 Oct 2022 15:41:12 +0800
+Subject: [PATCH 5/8] strongR-frida: symbol_frida_agent_main
+
+---
+ src/anti-anti-frida.py                | 22 +++++++++++++++++++++
+ 1 files changed, 22 insertions(+)
+ create mode 100644 src/anti-anti-frida.py
+
+diff --git a/src/anti-anti-frida.py b/src/anti-anti-frida.py
+new file mode 100644
+index 00000000..cc4e464d
+--- /dev/null
++++ b/src/anti-anti-frida.py
+@@ -0,0 +1,22 @@
++#!/usr/bin/env python
++import lief
++import sys
++import random
++import string
++import os
++if __name__ == "__main__":
++    input_file = sys.argv[1]
++    print(f"[*] Patch frida-agent: {input_file}")
++    random_name = "".join(random.sample(string.ascii_uppercase+string.ascii_lowercase, 5))
++    print(f"[*] Patch `frida` to `{random_name}``")
++    binary = lief.parse(input_file)
++    if not binary:
++        exit()
++    for symbol in binary.symbols:
++        if symbol.name == "frida_agent_main":
++            symbol.name = "main"
++        if "frida" in symbol.name:
++            symbol.name = symbol.name.replace("frida", random_name)
++        if "FRIDA" in symbol.name:
++            symbol.name = symbol.name.replace("FRIDA", random_name)
++    binary.write(input_file)
+\ No newline at end of file

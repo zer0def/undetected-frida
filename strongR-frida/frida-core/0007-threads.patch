@@ -1,0 +1,41 @@
+From 52a435a7a1c7f4f45a6ec157ef6b237a50c2e342 Mon Sep 17 00:00:00 2001
+From: heyang <375525827@qq.com>
+Date: Mon, 24 Oct 2022 15:56:18 +0800
+Subject: [PATCH 6/8] strongR-frida: thread_gum_js_loop
+
+---
+From 2d63299647f698b0c8d5c165c08edf1edf57b9dc Mon Sep 17 00:00:00 2001
+From: hluwa <hluwa888@gmail.com>
+Date: Mon, 16 Aug 2021 10:55:11 +0800
+Subject: [PATCH 7/8] strongR-frida: thread_gmain
+
+---
+From 55290725aa7102bee9482deea2673acda254cba6 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Tue, 14 Feb 2023 20:57:34 +0800
+Subject: [PATCH 09/11] thread_gdbus
+
+---
+ src/anti-anti-frida.py | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/src/anti-anti-frida.py b/src/anti-anti-frida.py
+index cc4e464d..9c22e35e 100644
+--- a/src/anti-anti-frida.py
++++ b/src/anti-anti-frida.py
+@@ -18,4 +18,9 @@ if __name__ == "__main__":
+             symbol.name = symbol.name.replace("frida", random_name)
+         if "FRIDA" in symbol.name:
+             symbol.name = symbol.name.replace("FRIDA", random_name)
+-    binary.write(input_file)
+\ No newline at end of file
++    binary.write(input_file)
++
++    for i in ["gum-js-loop", "gmain", "gdbus"]:  # comprehension with walrus notation? needs py3.8, tho
++        random_name = "".join(random.sample(string.ascii_lowercase+string.ascii_uppercase, len(i)))
++        print(f"[*] Patch `{i}` to `{random_name}`")
++        os.system(f"sed -b -i s/{i}/{random_name}/g {input_file}")
+\ No newline at end of file
+-- 
+2.21.0 (Apple Git-122)
+

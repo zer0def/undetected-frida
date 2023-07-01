@@ -1,0 +1,33 @@
+From f35c3a4db13f885f5c9234cd1e68071377714f07 Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Tue, 14 Feb 2023 20:58:35 +0800
+Subject: [PATCH 10/11] memory_str
+
+---
+ src/anti-anti-frida.py | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/src/anti-anti-frida.py b/src/anti-anti-frida.py
+index aaff50ce..b990cf21 100644
+--- a/src/anti-anti-frida.py
++++ b/src/anti-anti-frida.py
+@@ -27,6 +27,16 @@ if __name__ == "__main__":
+             symbol.name = symbol.name.replace("frida", random_name)
+         if "FRIDA" in symbol.name:
+             symbol.name = symbol.name.replace("FRIDA", random_name)
++
++    [
++        (
++            print(f"section={section.name} offset={hex(section.file_offset + addr)} {patch_str} -> {''.join(list(patch_str)[::-1])}"),
++            binary.patch_address(section.file_offset + addr, [ord(n) for n in list(patch_str)[::-1]])  # not sure if reversing a string can be considered sufficient
++        ) for section in binary.sections if section.name == ".rodata"
++        for patch_str in ["FridaScriptEngine", "GLib-GIO", "GDBusProxy", "GumScript"]  # 字符串特征修改 尽量与源字符一样
++        for addr in section.search_all(patch_str)  # Patch 内存字符串
++    ]
++
+     binary.write(input_file)
+ 
+     for i in ["gum-js-loop", "gmain", "gdbus"]:
+-- 
+2.34.1
+
