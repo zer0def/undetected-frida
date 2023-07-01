@@ -8,10 +8,10 @@ Subject: [PATCH 9/9] Florida: memfd-name-jit-cache
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/linux/frida-helper-backend.vala b/src/linux/frida-helper-backend.vala
-index 9da2152c..b133bd37 100644
+index 61f8307b..0121b1b4 100644
 --- a/src/linux/frida-helper-backend.vala
 +++ b/src/linux/frida-helper-backend.vala
-@@ -3233,7 +3233,7 @@ namespace Frida {
+@@ -3184,7 +3184,7 @@ namespace Frida {
  		}
  
  		private int memfd_create (string name, uint flags) {
@@ -22,4 +22,3 @@ index 9da2152c..b133bd37 100644
  
 -- 
 2.42.0
-

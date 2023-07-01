@@ -1,14 +1,14 @@
-From 98034685d895e07aa0cf079eb7f73189f12c6d66 Mon Sep 17 00:00:00 2001
-From: Ylarod <me@ylarod.cn>
-Date: Tue, 18 Jul 2023 15:57:19 +0800
-Subject: [PATCH 2/9] Florida: frida_agent_so
+From 6fdcb5ae0b7f398e0eb2b23f22f9ab01ae2e09bf Mon Sep 17 00:00:00 2001
+From: hluwa <hluwa888@gmail.com>
+Date: Mon, 16 Aug 2021 10:55:11 +0800
+Subject: [PATCH 4/8] strongR-frida: io_frida_agent_so
 
 ---
  src/linux/linux-host-session.vala | 7 ++++---
  1 file changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/src/linux/linux-host-session.vala b/src/linux/linux-host-session.vala
-index 50470ac8..64245792 100644
+index 301799ed..059e75a9 100644
 --- a/src/linux/linux-host-session.vala
 +++ b/src/linux/linux-host-session.vala
 @@ -128,12 +128,13 @@ namespace Frida {
@@ -29,5 +29,5 @@ index 50470ac8..64245792 100644
  				AgentMode.INSTANCED,
  				tempdir);
 -- 
-2.42.0
+2.39.3 (Apple Git-145)
 
