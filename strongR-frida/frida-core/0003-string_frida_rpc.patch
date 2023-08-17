@@ -1,6 +1,6 @@
-From 0596043d04d5d313b4d212b167c48b7437899b55 Mon Sep 17 00:00:00 2001
-From: Your Name <you@example.com>
-Date: Tue, 14 Feb 2023 20:45:39 +0800
+From 3f2451fc404baafc4a0b5768f96d5f196fdb5b1c Mon Sep 17 00:00:00 2001
+From: 
+Date: Thu, 17 Aug 2023 15:04:29 +0800
 Subject: [PATCH 03/11] string_frida_rpc
 
 ---
@@ -39,5 +39,5 @@ index 3695ba8c..02602abf 100644
  
  			var request_id_value = rpc_message.get_element (1);
 -- 
-2.34.1
+2.39.2 (Apple Git-143)
 

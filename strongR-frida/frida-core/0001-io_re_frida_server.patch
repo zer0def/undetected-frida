@@ -1,15 +1,14 @@
-From ee307b98f2dbf149412d47ef01077e0e723e9f4b Mon Sep 17 00:00:00 2001
-From: Your Name <you@example.com>
-Date: Tue, 14 Feb 2023 23:06:02 +0800
-Subject: [PATCH] io_re_frida_server
+From 51a7ab21a83eaddb5786233c4992793e273e174a Mon Sep 17 00:00:00 2001
+From: 
+Date: Thu, 17 Aug 2023 14:57:23 +0800
+Subject: [PATCH 01/11] io_re_frida_server
 
 ---
- server/server.vala       | 2 +-
- src/linux/system-linux.c | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ server/server.vala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/server/server.vala b/server/server.vala
-index b758be07..a7ffe068 100644
+index f96c7ca5..62cf0d71 100644
 --- a/server/server.vala
 +++ b/server/server.vala
 @@ -1,7 +1,7 @@
@@ -21,19 +20,6 @@ index b758be07..a7ffe068 100644
  	private static bool output_version = false;
  	private static string? listen_address = null;
  	private static string? certpath = null;
-diff --git a/src/linux/system-linux.c b/src/linux/system-linux.c
-index f336443a..20640918 100644
---- a/src/linux/system-linux.c
-+++ b/src/linux/system-linux.c
-@@ -153,7 +153,7 @@ frida_temporary_directory_get_system_tmp (void)
- {
- #ifdef HAVE_ANDROID
-   if (getuid () == 0)
--    return g_strdup ("/data/local/tmp");
-+    return g_strdup ("/data/local/tmp");
- #endif
- 
-   return g_strdup (g_get_tmp_dir ());
 -- 
-2.34.1
+2.39.2 (Apple Git-143)
 

@@ -1,6 +1,6 @@
-From 525bd9c17931be5c3e2d37dbd3be6d0ad5cb6c32 Mon Sep 17 00:00:00 2001
-From: Your Name <you@example.com>
-Date: Tue, 14 Feb 2023 20:47:40 +0800
+From fbe58cd618ec8a2d7492420389e1b267559337bc Mon Sep 17 00:00:00 2001
+From: 
+Date: Thu, 17 Aug 2023 15:06:52 +0800
 Subject: [PATCH 04/11] io_frida_agent_so
 
 ---
@@ -8,7 +8,7 @@ Subject: [PATCH 04/11] io_frida_agent_so
  1 file changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/src/linux/linux-host-session.vala b/src/linux/linux-host-session.vala
-index 7434eadd..cf539ad7 100644
+index 50470ac8..64245792 100644
 --- a/src/linux/linux-host-session.vala
 +++ b/src/linux/linux-host-session.vala
 @@ -128,12 +128,13 @@ namespace Frida {
@@ -29,5 +29,5 @@ index 7434eadd..cf539ad7 100644
  				AgentMode.INSTANCED,
  				tempdir);
 -- 
-2.34.1
+2.39.2 (Apple Git-143)
 

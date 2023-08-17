@@ -1,20 +1,22 @@
-From 0751934107fe8da15fcfcb45077c078f2460a14a Mon Sep 17 00:00:00 2001
-From: Your Name <you@example.com>
-Date: Tue, 14 Feb 2023 20:52:43 +0800
+From aa9812aa4b5679826c1877959f8282a8f71d0cf9 Mon Sep 17 00:00:00 2001
+From: 
+Date: Thu, 17 Aug 2023 15:13:40 +0800
 Subject: [PATCH 05/11] symbol_frida_agent_main
 
 ---
  src/agent-container.vala              | 2 +-
+ src/anti-frida.py                     | 0
  src/darwin/darwin-host-session.vala   | 2 +-
- src/embed-agent.sh                    | 9 +++++++--
+ src/embed-agent.sh                    | 8 +++++++-
  src/freebsd/freebsd-host-session.vala | 2 +-
  src/linux/linux-host-session.vala     | 2 +-
  src/qnx/qnx-host-session.vala         | 2 +-
  src/windows/windows-host-session.vala | 2 +-
- 7 files changed, 13 insertions(+), 8 deletions(-)
+ 8 files changed, 13 insertions(+), 7 deletions(-)
+ create mode 100644 src/anti-frida.py
 
 diff --git a/src/agent-container.vala b/src/agent-container.vala
-index a8db6b29..4a02a823 100644
+index a8db6b29..afe514cb 100644
 --- a/src/agent-container.vala
 +++ b/src/agent-container.vala
 @@ -25,7 +25,7 @@ namespace Frida {
@@ -22,12 +24,15 @@ index a8db6b29..4a02a823 100644
  
  			void * main_func_symbol;
 -			var main_func_found = container.module.symbol ("frida_agent_main", out main_func_symbol);
-+			var main_func_found = container.module.symbol ("hluda_main", out main_func_symbol);
++			var main_func_found = container.module.symbol ("main", out main_func_symbol);
  			assert (main_func_found);
  			container.main_impl = (AgentMainFunc) main_func_symbol;
  
+diff --git a/src/anti-frida.py b/src/anti-frida.py
+new file mode 100644
+index 00000000..e69de29b
 diff --git a/src/darwin/darwin-host-session.vala b/src/darwin/darwin-host-session.vala
-index 2e9c010b..ddc7f023 100644
+index 06e7065b..d215b75a 100644
 --- a/src/darwin/darwin-host-session.vala
 +++ b/src/darwin/darwin-host-session.vala
 @@ -354,7 +354,7 @@ namespace Frida {
@@ -35,12 +40,45 @@ index 2e9c010b..ddc7f023 100644
  			uint id;
  
 -			unowned string entrypoint = "frida_agent_main";
-+			unowned string entrypoint = "hluda_main";
++			unowned string entrypoint = "main";
  #if HAVE_EMBEDDED_ASSETS
  			id = yield fruitjector.inject_library_resource (pid, agent, entrypoint, agent_parameters, cancellable);
  #else
+diff --git a/src/embed-agent.sh b/src/embed-agent.sh
+index 6119b5e1..59182056 100755
+--- a/src/embed-agent.sh
++++ b/src/embed-agent.sh
+@@ -9,7 +9,7 @@ host_os=$6
+ resource_compiler=$7
+ resource_config=$8
+ lipo=$9
+-
++custom_script="$output_dir/../../../../frida-core/src/anti-frida.py"
+ priv_dir="$output_dir/frida-agent@emb"
+ 
+ mkdir -p "$priv_dir"
+@@ -22,6 +22,9 @@ collect_generic_agent ()
+   else
+     touch "$embedded_agent"
+   fi
++  if [ -f "$custom_script" ]; then
++    python3 "$custom_script" "$embedded_agent"
++  fi
+   embedded_agents+=("$embedded_agent")
+ }
+ 
+@@ -53,6 +56,9 @@ case $host_os in
+       echo "An agent must be provided"
+       exit 1
+     fi
++    if [ -f "$custom_script" ]; then
++      python3 "$custom_script" "$embedded_agent"
++    fi
+ 
+     exec "$resource_compiler" --toolchain=gnu -c "$resource_config" -o "$output_dir/frida-data-agent" "$embedded_agent"
+     ;;
 diff --git a/src/freebsd/freebsd-host-session.vala b/src/freebsd/freebsd-host-session.vala
-index a2204a4e..c84bb9bf 100644
+index a2204a4e..eac16116 100644
 --- a/src/freebsd/freebsd-host-session.vala
 +++ b/src/freebsd/freebsd-host-session.vala
 @@ -197,7 +197,7 @@ namespace Frida {
@@ -48,25 +86,25 @@ index a2204a4e..c84bb9bf 100644
  			var stream_request = Pipe.open (t.local_address, cancellable);
  
 -			var id = yield binjector.inject_library_resource (pid, agent_desc, "frida_agent_main",
-+			var id = yield binjector.inject_library_resource (pid, agent_desc, "hluda_main",
++			var id = yield binjector.inject_library_resource (pid, agent_desc, "main",
  				make_agent_parameters (pid, t.remote_address, options), cancellable);
  			injectee_by_pid[pid] = id;
  
 diff --git a/src/linux/linux-host-session.vala b/src/linux/linux-host-session.vala
-index 052a63b6..0ead0c29 100644
+index 64245792..086d0b96 100644
 --- a/src/linux/linux-host-session.vala
 +++ b/src/linux/linux-host-session.vala
-@@ -426,7 +426,7 @@ namespace Frida {
+@@ -427,7 +427,7 @@ namespace Frida {
  		protected override async Future<IOStream> perform_attach_to (uint pid, HashTable<string, Variant> options,
  				Cancellable? cancellable, out Object? transport) throws Error, IOError {
  			uint id;
 -			string entrypoint = "frida_agent_main";
-+			string entrypoint = "hluda_main";
++			string entrypoint = "main";
  			string parameters = make_agent_parameters (pid, "", options);
  			AgentFeatures features = CONTROL_CHANNEL;
  			var linjector = (Linjector) injector;
 diff --git a/src/qnx/qnx-host-session.vala b/src/qnx/qnx-host-session.vala
-index 69f2995f..5a94427d 100644
+index 69f2995f..a4e59ab2 100644
 --- a/src/qnx/qnx-host-session.vala
 +++ b/src/qnx/qnx-host-session.vala
 @@ -182,7 +182,7 @@ namespace Frida {
@@ -74,12 +112,12 @@ index 69f2995f..5a94427d 100644
  			var stream_request = Pipe.open (t.local_address, cancellable);
  
 -			var id = yield qinjector.inject_library_resource (pid, agent_desc, "frida_agent_main",
-+			var id = yield qinjector.inject_library_resource (pid, agent_desc, "hluda_main",
++			var id = yield qinjector.inject_library_resource (pid, agent_desc, "main",
  				make_agent_parameters (pid, t.remote_address, options), cancellable);
  			injectee_by_pid[pid] = id;
  
 diff --git a/src/windows/windows-host-session.vala b/src/windows/windows-host-session.vala
-index 67f1f3ef..a1776df1 100644
+index 67f1f3ef..518cd256 100644
 --- a/src/windows/windows-host-session.vala
 +++ b/src/windows/windows-host-session.vala
 @@ -274,7 +274,7 @@ namespace Frida {
@@ -87,8 +125,10 @@ index 67f1f3ef..a1776df1 100644
  
  			var winjector = injector as Winjector;
 -			var id = yield winjector.inject_library_resource (pid, agent, "frida_agent_main",
-+			var id = yield winjector.inject_library_resource (pid, agent, "hluda_main",
++			var id = yield winjector.inject_library_resource (pid, agent, "main",
  				make_agent_parameters (pid, t.remote_address, options), cancellable);
  			injectee_by_pid[pid] = id;
+ 
 -- 
 2.39.2 (Apple Git-143)
+

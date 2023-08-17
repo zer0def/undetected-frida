@@ -1,6 +1,6 @@
-From bd450473388872b32edc601f5d266b223cd51bc0 Mon Sep 17 00:00:00 2001
-From: Your Name <you@example.com>
-Date: Tue, 14 Feb 2023 21:00:04 +0800
+From 54a24b331333f4d5ecc94f991b0f408ee742fa47 Mon Sep 17 00:00:00 2001
+From: 
+Date: Thu, 17 Aug 2023 15:25:47 +0800
 Subject: [PATCH 11/11] protocol_unexpected_command
 
 ---
@@ -8,7 +8,7 @@ Subject: [PATCH 11/11] protocol_unexpected_command
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/droidy/droidy-client.vala b/src/droidy/droidy-client.vala
-index 0ed2edeb..7fc220b9 100644
+index 0ed2edeb..5ab4c006 100644
 --- a/src/droidy/droidy-client.vala
 +++ b/src/droidy/droidy-client.vala
 @@ -1013,7 +1013,7 @@ namespace Frida.Droidy {
@@ -16,10 +16,10 @@ index 0ed2edeb..7fc220b9 100644
  						case "CLSE":
  						case "WRTE":
 -							throw new Error.PROTOCOL ("Unexpected command");
-+							break; //throw new Error.PROTOCOL ("Unexpected command");
++							break;
  
  						default:
  							var length = parse_length (command_or_length);
 -- 
-2.34.1
+2.39.2 (Apple Git-143)
 
