@@ -1,5 +1,5 @@
 From aa9812aa4b5679826c1877959f8282a8f71d0cf9 Mon Sep 17 00:00:00 2001
-From: 
+From: Your Name <you@example.com> 
 Date: Thu, 17 Aug 2023 15:13:40 +0800
 Subject: [PATCH 05/11] symbol_frida_agent_main
 
