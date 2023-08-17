@@ -35,7 +35,7 @@ index 00000000..143996c5
 +
 +    for symbol in binary.symbols:  # 修改符号名
 +        if symbol.name == "frida_agent_main":
-+            symbol.name = "main"
++            symbol.name = "hluda_main"
 +
 +        if "frida" in symbol.name:
 +            symbol.name = symbol.name.replace("frida", random_name)
