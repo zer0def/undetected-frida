@@ -44,15 +44,7 @@ index 06e7065b..d215b75a 100644
  #if HAVE_EMBEDDED_ASSETS
  			id = yield fruitjector.inject_library_resource (pid, agent, entrypoint, agent_parameters, cancellable);
  #else
-diff --git a/src/embed-agent.sh b/src/embed-agent.sh
-index 6119b5e1..59182056 100755
---- a/src/embed-agent.sh
-+++ b/src/embed-agent.sh
-@@ -9,7 +9,7 @@ host_os=$6
- resource_compiler=$7
- resource_config=$8
- lipo=$9
--
+
 +custom_script="$output_dir/../../../../frida-core/src/anti-frida.py"
  priv_dir="$output_dir/frida-agent@emb"
  
