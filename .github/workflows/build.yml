@@ -96,7 +96,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get update && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y build-essential ninja-build gcc-multilib g++-multilib lib32stdc++-9-dev flex bison libc6-dev libc6-dev-i386 xz-utils  # upx tree
+        sudo apt-get update && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y build-essential ninja-build gcc-multilib g++-multilib lib32stdc++-9-dev flex bison libc6-dev libc6-dev-i386 xz-utils plzip zstd pigz  # upx tree
 
     - name: Build Frida
       run: |
@@ -106,34 +106,47 @@ jobs:
         for k in strongR-frida florida; do for i in "../${k}/"*; do pushd "${i##*/}"; for j in "../../${k}/${i##*/}/"*.patch; do patch -p1 <"${j}"; done; popd; done; done
 
         for j in core gum; do make "${j}-${{ matrix.os }}-${{ matrix.arch }}"; done  # target
-        for j in core gum gumjs; do python releng/devkit.py "frida-${j}" "${{ matrix.os }}-${{ matrix.arch }}" "build/devkits/${{ matrix.os }}/${{ matrix.arch }}/${j}"; done  # devkit
+        for j in core gum gumjs; do python releng/mkdevkit.py "frida-${j}" "${{ matrix.os }}-${{ matrix.arch }}" "build/devkits/${{ matrix.os }}/${{ matrix.arch }}/${j}"; done  # devkit
 
     - name: Ship artifacts
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        export XZ_OPT="-9e -T0"
         FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
         gh_release_put(){ curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/octet-stream" -o /dev/null --data-binary "@${1}" "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ needs.create.outputs.RELEASE_ID }}/assets?name=${2}"; }
+
+        export XZ_OPT="-9e -T0" ZSTD_NBTHREADS=0 ZSTD_CLEVEL=19
+        ZSTD_OPT="-${ZSTD_CLEVEL:-22} --ultra -T${ZSTD_NBTHREADS:-0}" LZIP_OPT="-n$(nproc) -9" PIGZ="-p$(nproc) -11"  # GZIP="-9" PIGZ="${GZIP}"
+        compr="xz ${XZ_OPT}:xz"
 
         cd frida
         gh_release_put frida-core/src/anti-anti-frida.py anti-anti-frida.py ||:
 
         for j in server inject; do  # bin
-          xz "build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}"
           #upx --lzma --best "build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}"
-          gh_release_put "build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}.xz" "${GITHUB_REPOSITORY##*/}-${j}-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.xz"
+
+          #for compr in "xz ${XZ_OPT}:xz" "plzip ${LZIP_OPT}:lz"; do  # "pigz ${PIGZ}:gz" "zstd ${ZSTD_OPT}:zst"; do
+          ${compr%:*} -k "build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}"
+          gh_release_put "build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}.${compr#*:}" "${GITHUB_REPOSITORY##*/}-${j}-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.${compr#*:}"
+          #done
         done
 
         for j in core gum gumjs; do  # devkit
-          tar -cJf "build/frida-${j}-devkit-${{ matrix.os }}-${{ matrix.arch }}.tar.xz" -C "build/devkits/${{ matrix.os }}/${{ matrix.arch }}/${j}/" .
-          gh_release_put "build/frida-${j}-devkit-${{ matrix.os }}-${{ matrix.arch }}.tar.xz" "${GITHUB_REPOSITORY##*/}-${j}-devkit-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.tar.xz"
+          tar -cf "build/frida-${j}-devkit-${{ matrix.os }}-${{ matrix.arch }}.tar" -C "build/devkits/${{ matrix.os }}/${{ matrix.arch }}/${j}/" .
+
+          #for compr in "xz ${XZ_OPT}:xz" "plzip ${LZIP_OPT}:lz"; do  # "pigz ${PIGZ}:gz" "zstd ${ZSTD_OPT}:zst"; do
+          ${compr%:*} -k "build/frida-${j}-devkit-${{ matrix.os }}-${{ matrix.arch }}.tar"
+          gh_release_put "build/frida-${j}-devkit-${{ matrix.os }}-${{ matrix.arch }}.tar.${compr#*:}" "${GITHUB_REPOSITORY##*/}-${j}-devkit-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.tar.${compr#*:}"
+          #done
         done
 
         [ "$(echo ${{ matrix.arch }} | sed 's/64$//')" != "${{ matrix.arch }}" ] && bit_width=64 || bit_width=32
-        xz "build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so"
         #upx --lzma --best "build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so"
-        gh_release_put "build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so.xz" "${GITHUB_REPOSITORY##*/}-gadget-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.so.xz"
+
+        #for compr in "xz ${XZ_OPT}:xz" "plzip ${LZIP_OPT}:lz"; do  # "pigz ${PIGZ}:gz" "zstd ${ZSTD_OPT}:zst"; do
+        ${compr%:*} -k "build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so"
+        gh_release_put "build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so.${compr#*:}" "${GITHUB_REPOSITORY##*/}-gadget-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.so.${compr#*:}"
+        #done
 
   publish:
     runs-on: ubuntu-22.04
