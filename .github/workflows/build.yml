@@ -97,16 +97,24 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y build-essential ninja-build gcc-multilib g++-multilib lib32stdc++-9-dev flex bison libc6-dev libc6-dev-i386 xz-utils plzip zstd pigz  # upx tree
+        sudo /opt/hostedtoolcache/Python/3.12.*/x64/bin/pip3 install -U setuptools
+
+        _CARCH="${{ matrix.arch }}"; if [ "${_CARCH%64}" = "${_CARCH}" ]; then  # && bit_width=32 || bit_width=64  # not an exact science, but honk it, good enough™
+          pushd /opt/hostedtoolcache/Python/3.12.*/x64/include/python3.12; patch -Rp1 <${{ github.workspace }}/pyconfig.h-i686-x86_64.patch; popd
+        fi
 
     - name: Build Frida
       run: |
         export ANDROID_NDK="${ANDROID_NDK%/*}/25.2.9519653"; export ANDROID_NDK_HOME="${ANDROID_NDK}" ANDROID_NDK_ROOT="${ANDROID_NDK}" ANDROID_NDK_LATEST_HOME="${ANDROID_NDK}"
         FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
         git clone --recurse-submodules https://github.com/frida/frida -b "${FRIDA_VERSION}"; cd frida
-        for k in strongR-frida florida; do for i in "../${k}/"*; do pushd "${i##*/}"; for j in "../../${k}/${i##*/}/"*.patch; do patch -p1 <"${j}"; done; popd; done; done
+        for k in strongR-frida florida; do for i in "../${k}/"*; do pushd "subprojects/${i##*/}"; for j in "../../../${k}/${i##*/}/"*.patch; do patch -p1 <"${j}"; done; popd; done; done
 
-        for j in core gum; do make "${j}-${{ matrix.os }}-${{ matrix.arch }}"; done  # target
-        for j in core gum gumjs; do python releng/mkdevkit.py "frida-${j}" "${{ matrix.os }}-${{ matrix.arch }}" "build/devkits/${{ matrix.os }}/${{ matrix.arch }}/${j}"; done  # devkit
+        #for j in core gum; do make "${j}-${{ matrix.os }}-${{ matrix.arch }}"; done  # target
+        #for j in core gum gumjs; do python releng/mkdevkit.py "frida-${j}" "${{ matrix.os }}-${{ matrix.arch }}" "build/devkits/${{ matrix.os }}/${{ matrix.arch }}/${j}"; done  # devkit
+
+        ./configure --prefix="${PWD}/build" --host="${{ matrix.os }}-${{ matrix.arch }}" --enable-frida-tools --enable-gadget --enable-server --enable-portal --enable-gadget -- -Dfrida-gum:devkits=gum,gumjs -Dfrida-core:devkits=core
+        make
 
     - name: Ship artifacts
       env:
@@ -117,36 +125,40 @@ jobs:
 
         export XZ_OPT="-9e -T0" ZSTD_NBTHREADS=0 ZSTD_CLEVEL=19
         ZSTD_OPT="-${ZSTD_CLEVEL:-22} --ultra -T${ZSTD_NBTHREADS:-0}" LZIP_OPT="-n$(nproc) -9" PIGZ="-p$(nproc) -11"  # GZIP="-9" PIGZ="${GZIP}"
+        #for compr in "xz ${XZ_OPT}:xz" "plzip ${LZIP_OPT}:lz"; do  # "pigz ${PIGZ}:gz" "zstd ${ZSTD_OPT}:zst"; do …; done
         compr="xz ${XZ_OPT}:xz"
 
         cd frida
-        gh_release_put frida-core/src/anti-anti-frida.py anti-anti-frida.py ||:
+        gh_release_put subprojects/frida-core/src/anti-anti-frida.py anti-anti-frida.py ||:
 
         for j in server inject; do  # bin
           #upx --lzma --best "build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}"
 
-          #for compr in "xz ${XZ_OPT}:xz" "plzip ${LZIP_OPT}:lz"; do  # "pigz ${PIGZ}:gz" "zstd ${ZSTD_OPT}:zst"; do
-          ${compr%:*} -k "build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}"
-          gh_release_put "build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}.${compr#*:}" "${GITHUB_REPOSITORY##*/}-${j}-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.${compr#*:}"
-          #done
+          #_src="build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}"
+          _src="build/subprojects/frida-core/${j}/frida-${j}"
+          ${compr%:*} -k "${_src}"
+          gh_release_put "${_src}.${compr#*:}" "${GITHUB_REPOSITORY##*/}-${j}-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.${compr#*:}"
         done
 
-        for j in core gum gumjs; do  # devkit
-          tar -cf "build/frida-${j}-devkit-${{ matrix.os }}-${{ matrix.arch }}.tar" -C "build/devkits/${{ matrix.os }}/${{ matrix.arch }}/${j}/" .
-
-          #for compr in "xz ${XZ_OPT}:xz" "plzip ${LZIP_OPT}:lz"; do  # "pigz ${PIGZ}:gz" "zstd ${ZSTD_OPT}:zst"; do
-          ${compr%:*} -k "build/frida-${j}-devkit-${{ matrix.os }}-${{ matrix.arch }}.tar"
-          gh_release_put "build/frida-${j}-devkit-${{ matrix.os }}-${{ matrix.arch }}.tar.${compr#*:}" "${GITHUB_REPOSITORY##*/}-${j}-devkit-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.tar.${compr#*:}"
-          #done
-        done
-
-        [ "$(echo ${{ matrix.arch }} | sed 's/64$//')" != "${{ matrix.arch }}" ] && bit_width=64 || bit_width=32
+        #[ "$(echo ${{ matrix.arch }} | sed 's/64$//')" != "${{ matrix.arch }}" ] && bit_width=64 || bit_width=32
         #upx --lzma --best "build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so"
+        #_src="build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so"
 
-        #for compr in "xz ${XZ_OPT}:xz" "plzip ${LZIP_OPT}:lz"; do  # "pigz ${PIGZ}:gz" "zstd ${ZSTD_OPT}:zst"; do
-        ${compr%:*} -k "build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so"
-        gh_release_put "build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so.${compr#*:}" "${GITHUB_REPOSITORY##*/}-gadget-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.so.${compr#*:}"
-        #done
+        _src="build/subprojects/frida-core/lib/gadget/frida-gadget.so"
+        ${compr%:*} -k "${_src}"
+        gh_release_put "${_src}.${compr#*:}" "${GITHUB_REPOSITORY##*/}-gadget-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.so.${compr#*:}"
+
+        for j in $(find build/subprojects -iname '*-example.c'); do  # devkit
+          _j="${j##*/}"
+          _tar="build/${_j%-example.c}-devkit-${{ matrix.os }}-${{ matrix.arch }}.tar"
+          #_tgt="${GITHUB_REPOSITORY##*/}-${j}-devkit-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.tar.${compr#*:}"
+          _tgt="undetected-${_j%-example.c}-devkit-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.tar.${compr#*:}"
+
+          tar -cf "${_tar}" -C "${j%/*}" .
+
+          ${compr%:*} -k "${_tar}"
+          gh_release_put "${_tar}.${compr#*:}" "${_tgt}"
+        done
 
   publish:
     runs-on: ubuntu-22.04
