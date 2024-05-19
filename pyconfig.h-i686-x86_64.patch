@@ -1,0 +1,69 @@
+--- a/pyconfig.h	2015-03-13 13:11:55.000000000 +0100
++++ b/pyconfig.h	2015-03-13 13:00:15.000000000 +0100
+@@ -309,14 +309,14 @@
+ #define HAVE_GAMMA 1
+ 
+ /* Define if we can use x64 gcc inline assembler */
+-/* #undef HAVE_GCC_ASM_FOR_X64 */
++#define HAVE_GCC_ASM_FOR_X64 1
+ 
+ /* Define if we can use gcc inline assembler to get and set x87 control word
+    */
+ #define HAVE_GCC_ASM_FOR_X87 1
+ 
+ /* Define if your compiler provides __uint128_t */
+-/* #undef HAVE_GCC_UINT128_T */
++#define HAVE_GCC_UINT128_T 1
+ 
+ /* Define if you have the getaddrinfo function. */
+ #define HAVE_GETADDRINFO 1
+@@ -1210,10 +1210,10 @@
+ #define SIZEOF_INT 4
+ 
+ /* The size of `long', as computed by sizeof. */
+-#define SIZEOF_LONG 4
++#define SIZEOF_LONG 8
+ 
+ /* The size of `long double', as computed by sizeof. */
+-#define SIZEOF_LONG_DOUBLE 12
++#define SIZEOF_LONG_DOUBLE 16
+ 
+ /* The size of `long long', as computed by sizeof. */
+ #define SIZEOF_LONG_LONG 8
+@@ -1225,22 +1225,22 @@
+ #define SIZEOF_PID_T 4
+ 
+ /* The size of `pthread_t', as computed by sizeof. */
+-#define SIZEOF_PTHREAD_T 4
++#define SIZEOF_PTHREAD_T 8
+ 
+ /* The size of `short', as computed by sizeof. */
+ #define SIZEOF_SHORT 2
+ 
+ /* The size of `size_t', as computed by sizeof. */
+-#define SIZEOF_SIZE_T 4
++#define SIZEOF_SIZE_T 8
+ 
+ /* The size of `time_t', as computed by sizeof. */
+-#define SIZEOF_TIME_T 4
++#define SIZEOF_TIME_T 8
+ 
+ /* The size of `uintptr_t', as computed by sizeof. */
+-#define SIZEOF_UINTPTR_T 4
++#define SIZEOF_UINTPTR_T 8
+ 
+ /* The size of `void *', as computed by sizeof. */
+-#define SIZEOF_VOID_P 4
++#define SIZEOF_VOID_P 8
+ 
+ /* The size of `wchar_t', as computed by sizeof. */
+ #define SIZEOF_WCHAR_T 2
+@@ -1344,7 +1344,7 @@
+ #endif
+ 
+ /* Define if arithmetic is subject to x87-style double rounding issue */
+-#define X87_DOUBLE_ROUNDING 1
++/* #undef X87_DOUBLE_ROUNDING */
+ 
+ /* Define on OpenBSD to activate all library features */
+ /* #undef _BSD_SOURCE */
