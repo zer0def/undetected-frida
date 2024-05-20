@@ -1,0 +1,71 @@
+From 18354a3e90e5e334ef83f6ff50578c8848db10b4 Mon Sep 17 00:00:00 2001
+From: heyang <heyang@weiboyi.com>
+Date: Mon, 20 May 2024 15:49:32 +0800
+Subject: [PATCH 08/10] update-python-scriptn
+
+---
+ src/embed-agent.py | 26 +++++++++++++++++++++-----
+ 1 file changed, 21 insertions(+), 5 deletions(-)
+
+diff --git a/src/embed-agent.py b/src/embed-agent.py
+index a3842db0..62a97e6b 100644
+--- a/src/embed-agent.py
++++ b/src/embed-agent.py
+@@ -74,15 +74,13 @@ def main(argv):
+             else:
+                 embedded_agent.write_bytes(b"")
+             
+-            print(f"[*] Patch frida-agent: {embedded_agent}")
+-            random_name = "".join(random.sample("ABCDEFGHIJKLMNO", 5))
+-            print(f"[*] Patch `frida` to `{random_name}``")
++            random_charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+ 
+             binary = lief.parse(embedded_agent)
+ 
+             if not binary:
+                 exit()
+-
++            random_name = "".join(random.sample(random_charset, 5))
+             for symbol in binary.symbols:
+                 if symbol.name == "frida_agent_main":
+                     symbol.name = "main"
+@@ -93,10 +91,20 @@ def main(argv):
+                 if "FRIDA" in symbol.name:
+                     symbol.name = symbol.name.replace("FRIDA", random_name)
+ 
++            all_patch_string = ["FridaScriptEngine", "GLib-GIO", "GDBusProxy", "GumScript"]  # 字符串特征修改 尽量与源字符一样
++            for section in binary.sections:
++                if section.name != ".rodata":
++                    continue
++                for patch_str in all_patch_string:
++                    addr_all = section.search_all(patch_str)  # Patch 内存字符串
++                    for addr in addr_all:
++                        patch = [ord(n) for n in list(patch_str)[::-1]]
++                        binary.patch_address(section.file_offset + addr, patch)
++
+             binary.write(embedded_agent)
+ 
+             # gum-js-loop thread
+-            random_name = "".join(random.sample("abcdefghijklmn", 11))
++            random_name = "".join(random.sample(random_charset, 11))
+             print(f"[*] Patch `gum-js-loop` to `{random_name}`")
+             os.system(f"sed -b -i s/gum-js-loop/{random_name}/g {embedded_agent}")
+ 
+@@ -105,6 +113,14 @@ def main(argv):
+             print(f"[*] Patch `gmain` to `{random_name}`")
+             os.system(f"sed -b -i s/gmain/{random_name}/g {embedded_agent}")
+ 
++             # thread_gmain
++            random_name = "".join(random.sample(random_charset, 5))
++            os.system(f"sed -b -i s/gmain/{random_name}/g {embedded_agent}")
++
++            # thread_gdbus
++            random_name = "".join(random.sample(random_charset, 5))
++            os.system(f"sed -b -i s/gdbus/{random_name}/g {embedded_agent}")
++
+             embedded_assets += [embedded_agent]
+     elif host_os in {"freebsd", "qnx"}:
+         embedded_agent = priv_dir / "frida-agent.so"
+-- 
+2.39.2 (Apple Git-143)
+

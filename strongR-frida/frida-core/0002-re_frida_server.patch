@@ -1,0 +1,99 @@
+From b30ff1dd1b63ae869ba5eba663052b09fabe7f8c Mon Sep 17 00:00:00 2001
+From: heyang <heyang@weiboyi.com>
+Date: Mon, 20 May 2024 15:18:45 +0800
+Subject: [PATCH 02/10] re_frida_server
+
+---
+ 0001-string_frida_rpc.patch | 58 +++++++++++++++++++++++++++++++++++++
+ server/server.vala          |  3 +-
+ 2 files changed, 60 insertions(+), 1 deletion(-)
+ create mode 100644 0001-string_frida_rpc.patch
+
+diff --git a/0001-string_frida_rpc.patch b/0001-string_frida_rpc.patch
+new file mode 100644
+index 00000000..e2733088
+--- /dev/null
++++ b/0001-string_frida_rpc.patch
+@@ -0,0 +1,58 @@
++From 70f7b930ac32c5941ae2737a6772116dfa89fca1 Mon Sep 17 00:00:00 2001
++From: heyang <heyang@weiboyi.com>
++Date: Mon, 20 May 2024 15:16:26 +0800
++Subject: [PATCH] string_frida_rpc
++
++---
++ lib/base/rpc.vala | 14 +++++++++++---
++ 1 file changed, 11 insertions(+), 3 deletions(-)
++
++diff --git a/lib/base/rpc.vala b/lib/base/rpc.vala
++index 3695ba8c..11428fac 100644
++--- a/lib/base/rpc.vala
+++++ b/lib/base/rpc.vala
++@@ -10,6 +10,14 @@ namespace Frida {
++ 		public RpcClient (RpcPeer peer) {
++ 			Object (peer: peer);
++ 		}
+++		public string getRpcStr(bool quote){
+++			string result = (string) GLib.Base64.decode((string) GLib.Base64.decode("Wm5KcFpHRTZjbkJq"));
+++			if(quote){
+++				return "\"" + result + "\"";
+++			}else{
+++				return result;
+++			}
+++		}
++ 
++ 		public async Json.Node call (string method, Json.Node[] args, Cancellable? cancellable) throws Error, IOError {
++ 			string request_id = Uuid.string_random ();
++@@ -17,7 +25,7 @@ namespace Frida {
++ 			var request = new Json.Builder ();
++ 			request
++ 				.begin_array ()
++-				.add_string_value ("frida:rpc")
+++				.add_string_value (getRpcStr(true))
++ 				.add_string_value (request_id)
++ 				.add_string_value ("call")
++ 				.add_string_value (method)
++@@ -70,7 +78,7 @@ namespace Frida {
++ 		}
++ 
++ 		public bool try_handle_message (string json) {
++-			if (json.index_of ("\"frida:rpc\"") == -1)
+++			if (json.index_of (getRpcStr(true)) == -1)
++ 				return false;
++ 
++ 			var parser = new Json.Parser ();
++@@ -99,7 +107,7 @@ namespace Frida {
++ 				return false;
++ 
++ 			string? type = rpc_message.get_element (0).get_string ();
++-			if (type == null || type != "frida:rpc")
+++			if (type == null || type != getRpcStr(true))
++ 				return false;
++ 
++ 			var request_id_value = rpc_message.get_element (1);
++-- 
++2.39.2 (Apple Git-143)
++
+diff --git a/server/server.vala b/server/server.vala
+index 525c145e..7faa7476 100644
+--- a/server/server.vala
++++ b/server/server.vala
+@@ -1,7 +1,7 @@
+ namespace Frida.Server {
+ 	private static Application application;
+ 
+-	private const string DEFAULT_DIRECTORY = "re.frida.server";
++	private const string DEFAULT_DIRECTORY = null;
+ 	private static bool output_version = false;
+ 	private static string? listen_address = null;
+ 	private static string? certpath = null;
+@@ -50,6 +50,7 @@ namespace Frida.Server {
+ 	};
+ 
+ 	private static int main (string[] args) {
++		DEFAULT_DIRECTORY = GLib.Uuid.string_random();
+ 		Environment.init ();
+ 
+ #if DARWIN
+-- 
+2.39.2 (Apple Git-143)
+

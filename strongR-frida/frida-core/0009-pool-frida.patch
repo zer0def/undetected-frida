@@ -1,0 +1,24 @@
+From 4c49dffeb49257b0d85df4fdfc526aac1b6a9113 Mon Sep 17 00:00:00 2001
+From: heyang <heyang@weiboyi.com>
+Date: Mon, 20 May 2024 15:51:14 +0800
+Subject: [PATCH 09/10] pool-frida
+
+---
+ src/frida-glue.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/frida-glue.c b/src/frida-glue.c
+index ee8f0737..0478caa1 100644
+--- a/src/frida-glue.c
++++ b/src/frida-glue.c
+@@ -40,6 +40,7 @@ frida_init_with_runtime (FridaRuntime rt)
+     g_io_module_openssl_register ();
+ #endif
+ 
++    g_set_prgname ("ggbond");
+     if (runtime == FRIDA_RUNTIME_OTHER)
+     {
+       main_context = g_main_context_ref (g_main_context_default ());
+-- 
+2.39.2 (Apple Git-143)
+
