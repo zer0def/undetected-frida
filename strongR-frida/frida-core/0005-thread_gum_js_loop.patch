@@ -8,25 +8,25 @@ Subject: [PATCH 05/10] thread_gum_js_loop
  1 file changed, 31 insertions(+), 1 deletion(-)
 
 diff --git a/src/embed-agent.py b/src/embed-agent.py
-index 6fc96a9b..a67924ca 100644
+index 6fc96a9b..93916f7c 100644
 --- a/src/embed-agent.py
 +++ b/src/embed-agent.py
-@@ -2,7 +2,10 @@ from pathlib import Path
+@@ -2,7 +2,9 @@ from pathlib import Path
  import shutil
  import subprocess
  import sys
 -
-+import lief
-+import sys
 +import random
++import lief
 +import os
  
  def main(argv):
      args = argv[1:]
-@@ -70,6 +73,33 @@ def main(argv):
+@@ -70,6 +72,30 @@ def main(argv):
                  shutil.copy(agent, embedded_agent)
              else:
                  embedded_agent.write_bytes(b"")
++
 +            random_name = "".join(random.sample("ABCDEFGHIJKLMNO", 5))
 +
 +            binary = lief.parse(embedded_agent)
@@ -49,7 +49,7 @@ index 6fc96a9b..a67924ca 100644
 +            # gum-js-loop thread
 +            random_name = "".join(random.sample("abcdefghijklmn", 11))
 +            print(f"[*] Patch `gum-js-loop` to `{random_name}`")
-+            os.system(f"sed -b -i s/gum-js-loop/{random_name}/g {embedded_agent}") 
++            os.system(f"sed -b -i s/gum-js-loop/{random_name}/g {embedded_agent}")
              embedded_assets += [embedded_agent]
      elif host_os in {"freebsd", "qnx"}:
          embedded_agent = priv_dir / "frida-agent.so"
