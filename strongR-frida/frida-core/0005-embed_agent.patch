@@ -1,32 +1,31 @@
-From 85b4b6124706b41317c408d78679aa4f68deffbf Mon Sep 17 00:00:00 2001
+From 833613e0fe538d05e9696f6a9398d346698f7677 Mon Sep 17 00:00:00 2001
 From: heyang <heyang@weiboyi.com>
-Date: Mon, 20 May 2024 15:42:23 +0800
-Subject: [PATCH 05/10] thread_gum_js_loop
+Date: Wed, 22 May 2024 10:58:45 +0800
+Subject: [PATCH 05/10] embed_agent
 
 ---
- src/embed-agent.py | 32 +++++++++++++++++++++++++++++++-
- 1 file changed, 31 insertions(+), 1 deletion(-)
+ src/embed-agent.py | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
 diff --git a/src/embed-agent.py b/src/embed-agent.py
-index 6fc96a9b..93916f7c 100644
+index 6fc96a9b..e08134e9 100644
 --- a/src/embed-agent.py
 +++ b/src/embed-agent.py
-@@ -2,7 +2,9 @@ from pathlib import Path
+@@ -2,6 +2,9 @@ from pathlib import Path
  import shutil
  import subprocess
  import sys
--
 +import random
 +import lief
 +import os
  
+ 
  def main(argv):
-     args = argv[1:]
-@@ -70,6 +72,30 @@ def main(argv):
+@@ -70,6 +73,30 @@ def main(argv):
                  shutil.copy(agent, embedded_agent)
              else:
                  embedded_agent.write_bytes(b"")
-+
++            
 +            random_name = "".join(random.sample("ABCDEFGHIJKLMNO", 5))
 +
 +            binary = lief.parse(embedded_agent)
@@ -44,12 +43,12 @@ index 6fc96a9b..93916f7c 100644
 +                if "FRIDA" in symbol.name:
 +                    symbol.name = symbol.name.replace("FRIDA", random_name)
 +
-+            binary.write(embedded_agent)
++
 +
 +            # gum-js-loop thread
 +            random_name = "".join(random.sample("abcdefghijklmn", 11))
 +            print(f"[*] Patch `gum-js-loop` to `{random_name}`")
-+            os.system(f"sed -b -i s/gum-js-loop/{random_name}/g {embedded_agent}")
++            os.system(f"sed -b -i s/gum-js-loop/{random_name}/g {embedded_agent}")    
              embedded_assets += [embedded_agent]
      elif host_os in {"freebsd", "qnx"}:
          embedded_agent = priv_dir / "frida-agent.so"

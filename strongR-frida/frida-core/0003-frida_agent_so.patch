@@ -1,94 +1,12 @@
-From 5c04a89937370c86ce48de5a87ff61b0808798dd Mon Sep 17 00:00:00 2001
+From a74da4a62e01f0af7bd0f90a7ffa24caf5e1f7f0 Mon Sep 17 00:00:00 2001
 From: heyang <heyang@weiboyi.com>
-Date: Mon, 20 May 2024 15:21:39 +0800
+Date: Wed, 22 May 2024 10:51:44 +0800
 Subject: [PATCH 03/10] frida_agent_so
 
 ---
- .DS_Store                         | Bin 0 -> 6148 bytes
- 0001-string_frida_rpc.patch       |  58 ------------------------------
- src/linux/linux-host-session.vala |   7 ++--
- 3 files changed, 4 insertions(+), 61 deletions(-)
- create mode 100644 .DS_Store
- delete mode 100644 0001-string_frida_rpc.patch
+ src/linux/linux-host-session.vala | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/.DS_Store b/.DS_Store
-new file mode 100644
-index 0000000000000000000000000000000000000000..5008ddfcf53c02e82d7eee2e57c38e5672ef89f6
-GIT binary patch
-literal 6148
-zcmeH~Jr2S!425mzP>H1@V-^m;4Wg<&0T*E43hX&L&p$$qDprKhvt+--jT7}7np#A3
-zem<@ulZcFPQ@L2!n>{z**<q8>++&mCkOWA81W14cNZ<zv;LbK1Poaz?KmsK2CSc!(
-z0ynLxE!0092;Krf2c+FF_Fe*7ECH>lEfg7;MkzE(HCqgga^y>{tEnwC%0;vJ&^%eQ
-zLs35+`xjp>T0<F0fCPF1$Cyrb|F7^5{eNG?83~ZUUlGt@xh*qZDeu<Z%US-OSsOPv
-j)R!Z4KLME7ReXlK;d!wEw5GODWMKRea10D2@KpjYNUI8I
-
-literal 0
-HcmV?d00001
-
-diff --git a/0001-string_frida_rpc.patch b/0001-string_frida_rpc.patch
-deleted file mode 100644
-index e2733088..00000000
---- a/0001-string_frida_rpc.patch
-+++ /dev/null
-@@ -1,58 +0,0 @@
--From 70f7b930ac32c5941ae2737a6772116dfa89fca1 Mon Sep 17 00:00:00 2001
--From: heyang <heyang@weiboyi.com>
--Date: Mon, 20 May 2024 15:16:26 +0800
--Subject: [PATCH] string_frida_rpc
--
-----
-- lib/base/rpc.vala | 14 +++++++++++---
-- 1 file changed, 11 insertions(+), 3 deletions(-)
--
--diff --git a/lib/base/rpc.vala b/lib/base/rpc.vala
--index 3695ba8c..11428fac 100644
----- a/lib/base/rpc.vala
--+++ b/lib/base/rpc.vala
--@@ -10,6 +10,14 @@ namespace Frida {
-- 		public RpcClient (RpcPeer peer) {
-- 			Object (peer: peer);
-- 		}
--+		public string getRpcStr(bool quote){
--+			string result = (string) GLib.Base64.decode((string) GLib.Base64.decode("Wm5KcFpHRTZjbkJq"));
--+			if(quote){
--+				return "\"" + result + "\"";
--+			}else{
--+				return result;
--+			}
--+		}
-- 
-- 		public async Json.Node call (string method, Json.Node[] args, Cancellable? cancellable) throws Error, IOError {
-- 			string request_id = Uuid.string_random ();
--@@ -17,7 +25,7 @@ namespace Frida {
-- 			var request = new Json.Builder ();
-- 			request
-- 				.begin_array ()
---				.add_string_value ("frida:rpc")
--+				.add_string_value (getRpcStr(true))
-- 				.add_string_value (request_id)
-- 				.add_string_value ("call")
-- 				.add_string_value (method)
--@@ -70,7 +78,7 @@ namespace Frida {
-- 		}
-- 
-- 		public bool try_handle_message (string json) {
---			if (json.index_of ("\"frida:rpc\"") == -1)
--+			if (json.index_of (getRpcStr(true)) == -1)
-- 				return false;
-- 
-- 			var parser = new Json.Parser ();
--@@ -99,7 +107,7 @@ namespace Frida {
-- 				return false;
-- 
-- 			string? type = rpc_message.get_element (0).get_string ();
---			if (type == null || type != "frida:rpc")
--+			if (type == null || type != getRpcStr(true))
-- 				return false;
-- 
-- 			var request_id_value = rpc_message.get_element (1);
---- 
--2.39.2 (Apple Git-143)
--
 diff --git a/src/linux/linux-host-session.vala b/src/linux/linux-host-session.vala
 index 50470ac8..64245792 100644
 --- a/src/linux/linux-host-session.vala
