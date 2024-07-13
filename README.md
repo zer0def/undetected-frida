@@ -30,8 +30,10 @@ Releases right next door, on the side panel →
 - [https://bbs.kanxue.com/thread-276111.htm](https://bbs.kanxue.com/thread-276111.htm)
 - [https://github.com/CrackerCat/strongR-frida-android](https://github.com/CrackerCat/strongR-frida-android)
 - [https://github.com/hzzheyang/strongR-frida-android](https://github.com/hzzheyang/strongR-frida-android)
+- [https://github.com/AeonLucid/MagiskFrida](https://github.com/AeonLucid/MagiskFrida)
 - [https://github.com/Ylarod/Florida](https://github.com/Ylarod/Florida)
 - [https://github.com/thau0x01/frida-patches](https://github.com/thau0x01/frida-patches)
+- [https://github.com/Exo1i/MagiskHluda](https://github.com/Exo1i/MagiskHluda)
 
 ## Thanks
 
@@ -41,4 +43,8 @@ Releases right next door, on the side panel →
 - [@qtfreet00](https://github.com/qtfreet00)
 - [@hzzheyang](https://github.com/hzzheyang)
 - [@CrackerCat](https://github.com/CrackerCat)
+- [@AeonLucid](https://github.com/AeonLucid)
+- [@Ylarod](https://github.com/Ylarod)
 - [@thau0x01](https://github.com/thau0x01)
+- [@Exo1i](https://github.com/Exo1i)
+- [@lico-n](https://github.com/lico-n)
