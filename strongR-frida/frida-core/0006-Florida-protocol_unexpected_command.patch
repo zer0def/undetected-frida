@@ -1,14 +1,14 @@
-From d079b1535ac352eb6c9b5ccf0cd20f752ab323f8 Mon Sep 17 00:00:00 2001
-From: heyang <heyang@weiboyi.com>
-Date: Wed, 22 May 2024 11:01:42 +0800
-Subject: [PATCH 07/10] protocol_unexpected_command
+From e8d464a18de6e97d3e84c4c3cb5c73b807586798 Mon Sep 17 00:00:00 2001
+From: Ylarod <me@ylarod.cn>
+Date: Tue, 18 Jul 2023 16:04:55 +0800
+Subject: [PATCH 6/9] Florida: protocol_unexpected_command
 
 ---
  src/droidy/droidy-client.vala | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/droidy/droidy-client.vala b/src/droidy/droidy-client.vala
-index ddc56ccc..8b9e9c4c 100644
+index ddc56ccc..c3464e77 100644
 --- a/src/droidy/droidy-client.vala
 +++ b/src/droidy/droidy-client.vala
 @@ -1015,7 +1015,7 @@ namespace Frida.Droidy {
@@ -16,10 +16,10 @@ index ddc56ccc..8b9e9c4c 100644
  						case "CLSE":
  						case "WRTE":
 -							throw new Error.PROTOCOL ("Unexpected command");
-+							break;
++							break; // throw new Error.PROTOCOL ("Unexpected command");
  
  						default:
  							var length = parse_length (command_or_length);
 -- 
-2.39.2 (Apple Git-143)
+2.42.0
 
