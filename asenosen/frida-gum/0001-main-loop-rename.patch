@@ -1,0 +1,13 @@
+diff --git a/bindings/gumjs/gumscriptscheduler.c b/bindings/gumjs/gumscriptscheduler.c
+index b86a6c57..2459c874 100644
+--- a/bindings/gumjs/gumscriptscheduler.c
++++ b/bindings/gumjs/gumscriptscheduler.c
+@@ -114,7 +114,7 @@ gum_script_scheduler_start (GumScriptScheduler * self)
+   {
+     self->js_loop = g_main_loop_new (self->js_context, TRUE);
+ 
+-    self->js_thread = g_thread_new ("gum-js-loop",
++    self->js_thread = g_thread_new ("${FRIDA_PREFIX}-gjs-loop",
+         (GThreadFunc) gum_script_scheduler_run_js_loop, self);
+   }
+ }

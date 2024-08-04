@@ -15,7 +15,7 @@ index ee8f0737..43cc8167 100644
      g_io_module_openssl_register ();
  #endif
  
-+    g_set_prgname ("ggbond");
++    g_set_prgname ("${FRIDA_PREFIX}");
 +
      if (runtime == FRIDA_RUNTIME_OTHER)
      {
