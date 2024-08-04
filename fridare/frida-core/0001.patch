@@ -1,0 +1,33 @@
+diff --git a/src/anti-anti-frida.py b/src/anti-anti-frida.py
+index aaff50ce..b990cf21 100644
+--- a/src/anti-anti-frida.py
++++ b/src/anti-anti-frida.py
+@@ -29,6 +29,28 @@ if __name__ == "__main__":
+         for addr in section.search_all(patch_str)  # Patch 内存字符串
+     ]
+ 
++    [
++        (
++            print(f"section={section.name} offset={hex(section.file_offset + addr)} {patch_str} -> {random_name}{patch_str[5:]}"),
++            binary.patch_address(section.file_offset+addr, [ord(n) for n in random_name+patch_str[5:]])
++        ) for section in binary.sections if section.name == ".rodata"
++        for patch_str in ["frida_server_","frida-main-loop","frida:rpc","frida-agent-<arch>.so","frida-agent-arm.so","frida-agent-arm64.so","frida-agent-32.so","frida-agent-64.so"]
++        for addr in section.search_all(patch_str)
++    ]
++    [
++        (
++            print(f"section={section.name} offset={hex(section.file_offset + addr)} frida:rpc -> {random_name}:rpc"),
++            binary.patch_address(section.file_offset+addr, [ord(n) for n in random_name+":rpc"])
++        ) for section in binary.sections if section.name == ".text" for addr in section.search_all("frida:rpc")
++    ]
++    [
++        (
++            print(f"section={section.name} offset={hex(section.file_offset + addr)} gum- -> {random_name[:3]}-"),
++            binary.patch_address(section.file_offset+addr, [ord(n) for n in random_name[:3]+"-"])
++        ) for section_name in [".rodata",".text"] for section in binary.sections
++        if section.name == section_name for addr in section.search_all("gum-")
++    ]
++
+     binary.write(input_file)
+ 
+     for i in ["gum-js-loop", "gmain", "gdbus"]:  # comprehension with walrus notation? needs py3.8, tho
