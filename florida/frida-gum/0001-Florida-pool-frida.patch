@@ -16,7 +16,7 @@ index f6e6243f..3305f629 100644
    gum_do_init ();
  
 -  g_set_prgname ("frida");
-+  g_set_prgname ("ggbond");
++  g_set_prgname ("${FRIDA_PREFIX}");
  
  #if defined (HAVE_LINUX) && defined (HAVE_GLIBC)
    gum_libdl_prevent_unload ();
