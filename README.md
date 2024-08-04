@@ -33,6 +33,8 @@ Releases right next door, on the side panel →
 - [https://github.com/Ylarod/Florida](https://github.com/Ylarod/Florida)
 - [https://github.com/AeonLucid/MagiskFrida](https://github.com/AeonLucid/MagiskFrida)
 - [https://github.com/Exo1i/MagiskHluda](https://github.com/Exo1i/MagiskHluda)
+- [https://github.com/AsenOsen/frida-stealth](https://github.com/AsenOsen/frida-stealth)
+- [https://github.com/suifei/fridare](https://github.com/suifei/fridare)
 
 ## Thanks
 

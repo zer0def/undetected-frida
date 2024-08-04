@@ -110,7 +110,7 @@ jobs:
         git clone --recurse-submodules https://github.com/frida/frida -b "${{ needs.check.outputs.FRIDA_VERSION }}"; pushd frida
 
         FRIDA_PREFIX="$(tr -cd 'a-z0-9' </dev/urandom | head -c32)" SESSION_SERVICE="$(tr -cd 'a-f0-9' </dev/urandom | head -c32)"
-        for k in strongR-frida florida asenosen; do for i in "../${k}/"*; do pushd "subprojects/${i##*/}"; for j in "../../../${k}/${i##*/}/"*.patch; do FRIDA_PREFIX="${FRIDA_PREFIX}" SESSION_SERVICE="${SESSION_SERVICE}" envsubst <"${j}" | patch -p1; done; popd; done; done
+        for k in strongR-frida florida asenosen fridare; do for i in "../${k}/"*; do pushd "subprojects/${i##*/}"; for j in "../../../${k}/${i##*/}/"*.patch; do FRIDA_PREFIX="${FRIDA_PREFIX}" SESSION_SERVICE="${SESSION_SERVICE}" envsubst <"${j}" | patch -p1; done; popd; done; done
 
         #for j in core gum; do make "${j}-${{ matrix.os }}-${{ matrix.arch }}"; done  # target
         #for j in core gum gumjs; do python releng/mkdevkit.py "frida-${j}" "${{ matrix.os }}-${{ matrix.arch }}" "build/devkits/${{ matrix.os }}/${{ matrix.arch }}/${j}"; done  # devkit
