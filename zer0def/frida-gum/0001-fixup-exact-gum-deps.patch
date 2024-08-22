@@ -1,0 +1,28 @@
+#-    "frida-il2cpp-bridge": "0.9.0"
+#+    "git+https://github.com/vfsfitvnm/frida-il2cpp-bridge": "v0.9.0"
+diff --git a/bindings/gumjs/generate-runtime.py b/bindings/gumjs/generate-runtime.py
+index 679cad56..5ef88c52 100644
+--- a/bindings/gumjs/generate-runtime.py
++++ b/bindings/gumjs/generate-runtime.py
+@@ -14,9 +14,9 @@ RELAXED_DEPS = {
+ }
+ 
+ EXACT_DEPS = {
+-    "frida-java-bridge": "6.3.5",
+-    "frida-objc-bridge": "7.0.6",
+-    "frida-swift-bridge": "2.0.8"
++    "git+https://github.com/frida/frida-java-bridge": "0495713823b95acc0ca6bc862f154ef4f5595aba",
++    "git+https://github.com/frida/frida-objc-bridge": "v7.0.6",
++    "git+https://github.com/frida/frida-swift-bridge": "v2.0.8"
+ }
+ 
+ 
+@@ -52,7 +52,7 @@ def generate_runtime(output_dir, priv_dir, input_dir, gum_dir, capstone_incdir,
+                        capture_output=True,
+                        cwd=priv_dir,
+                        check=True)
+-        subprocess.run([npm, "install", "-E"] + [f"{name}@{version_spec}" for name, version_spec in EXACT_DEPS.items()],
++        subprocess.run([npm, "install", "-E"] + [f"{name}#{version_spec}" for name, version_spec in EXACT_DEPS.items()],
+                        capture_output=True,
+                        cwd=priv_dir,
+                        check=True)
