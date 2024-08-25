@@ -96,8 +96,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get update && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y build-essential ninja-build gcc-multilib g++-multilib lib32stdc++-9-dev flex bison libc6-dev libc6-dev-i386 xz-utils plzip zstd pigz gettext-base  # upx tree
-        sudo /opt/hostedtoolcache/Python/3.12.*/x64/bin/pip3 install -U setuptools lief
+        [ $(id -u) -eq 0 ] || SUDO=sudo
+        ${SUDO} apt-get update && DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get install -y build-essential ninja-build gcc-multilib g++-multilib lib32stdc++-9-dev flex bison libc6-dev libc6-dev-i386 xz-utils plzip zstd pigz gettext-base  # upx tree
+        ${SUDO} /opt/hostedtoolcache/Python/3.12.*/x64/bin/pip3 install -U setuptools lief
 
         _CARCH="${{ matrix.arch }}"; if [ "${_CARCH%64}" = "${_CARCH}" ]; then  # && bit_width=32 || bit_width=64
           pushd /opt/hostedtoolcache/Python/3.12.*/x64/include/python3.12; patch -Rp1 <${{ github.workspace }}/pyconfig.h-i686-x86_64.patch; popd

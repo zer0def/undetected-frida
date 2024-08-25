@@ -3,6 +3,18 @@
 This repo follows [FRIDA](https://github.com/frida/frida) upstream, auto-publishing the same version with some extra anti-detection patches applied.
 Releases right next door, on the side panel →
 
+## State of the repository
+
+This repo holds a set of community-developed patches geared towards symptomatically attempting to make Frida barely less detectable by applications having lame counter-measures towards it, which I have tried to maintain as part of a hobby.
+
+Due to the amount of users incapable of distinguishing (or even passingly considering) whether bugs are caused by patches from this repository, upstream or themselves "just holding it wrong", the issue tracker is closed, as I ultimately hold no interest in repeatedly attempting to tell people how to correctly debug their issues or donating any form of support to this.
+
+Unless clearly stipulated otherwise elsewhere in ironclad legal writing applicable in the recepient's resident jurisdiction, the reader is never entitled to anyone else's time and effort other than their own, regardless of potential involvement of in-kind contribution. The fact this needs to be explicitly spelled out speaks for itself.
+
+However, constructive feedback is taken via pull request.
+
+With that said, one should never consider symptomatic substring-based detection or evasion as an exhaustive (or even definitive) measure.
+
 ## Patches
 
 |patchset|module|name|
