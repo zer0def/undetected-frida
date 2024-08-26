@@ -33,6 +33,7 @@ Releases right next door, on the side panel →
 - [https://github.com/AeonLucid/MagiskFrida](https://github.com/AeonLucid/MagiskFrida)
 - [https://github.com/Ylarod/Florida](https://github.com/Ylarod/Florida)
 - [https://github.com/thau0x01/frida-patches](https://github.com/thau0x01/frida-patches)
+- [https://github.com/soyasoya5/strongR-frida-patches](https://github.com/soyasoya5/strongR-frida-patches/tree/il2cpp_bridge_embed)
 - [https://github.com/Exo1i/MagiskHluda](https://github.com/Exo1i/MagiskHluda)
 
 ## Thanks
@@ -46,5 +47,7 @@ Releases right next door, on the side panel →
 - [@AeonLucid](https://github.com/AeonLucid)
 - [@Ylarod](https://github.com/Ylarod)
 - [@thau0x01](https://github.com/thau0x01)
+- [@Chensem](https://github.com/Chensem)
+- [@soyasoya5](https://github.com/soyasoya5)
 - [@Exo1i](https://github.com/Exo1i)
 - [@lico-n](https://github.com/lico-n)

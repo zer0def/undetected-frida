@@ -1,0 +1,278 @@
+# Author:  Chensem 
+# Profile: https://github.com/Chensem
+diff --git a/bindings/gumjs/generate-runtime.py b/bindings/gumjs/generate-runtime.py
+index 75951b2f..2df61037 100755
+--- a/bindings/gumjs/generate-runtime.py
++++ b/bindings/gumjs/generate-runtime.py
+@@ -18,7 +18,8 @@ RELAXED_DEPS = {
+ EXACT_DEPS = {
+     "frida-java-bridge": "6.3.5",
+     "frida-objc-bridge": "7.0.6",
+-    "frida-swift-bridge": "2.0.8"
++    "frida-swift-bridge": "2.0.8",
++    "frida-il2cpp-bridge": "0.9.0"
+ }
+ 
+ 
+@@ -77,6 +78,7 @@ def generate_runtime(backends, arch, endian, input_dir, gum_dir, capstone_incdir
+         objc = quick_tmp_dir / "objc.js"
+         swift = quick_tmp_dir / "swift.js"
+         java = quick_tmp_dir / "java.js"
++        il2cpp = quick_tmp_dir / "il2cpp.js"
+ 
+         quick_options = [
+             "-c", # Compress for smaller code and better performance.
+@@ -85,6 +87,7 @@ def generate_runtime(backends, arch, endian, input_dir, gum_dir, capstone_incdir
+         call_compiler(runtime_reldir / "objc.js", "-o", objc, *quick_options)
+         call_compiler(runtime_reldir / "swift.js", "-o", swift, *quick_options)
+         call_compiler(runtime_reldir / "java.js", "-o", java, *quick_options)
++        call_compiler(runtime_reldir / "il2cpp.js", "-o", il2cpp, *quick_options)
+ 
+         qcflags = []
+         if endian != sys.byteorder:
+@@ -94,6 +98,8 @@ def generate_runtime(backends, arch, endian, input_dir, gum_dir, capstone_incdir
+         generate_runtime_quick("objc", output_dir, priv_dir, "gumquickscript-objc.h", [objc], quickcompile, qcflags)
+         generate_runtime_quick("swift", output_dir, priv_dir, "gumquickscript-swift.h", [swift], quickcompile, qcflags)
+         generate_runtime_quick("java", output_dir, priv_dir, "gumquickscript-java.h", [java], quickcompile, qcflags)
++        generate_runtime_quick("il2cpp", output_dir, priv_dir, "gumquickscript-il2cpp.h", [il2cpp], quickcompile, qcflags)
++
+ 
+ 
+     if "v8" in backends:
+@@ -102,6 +108,8 @@ def generate_runtime(backends, arch, endian, input_dir, gum_dir, capstone_incdir
+         objc = v8_tmp_dir / "objc.js"
+         swift = v8_tmp_dir / "swift.js"
+         java = v8_tmp_dir / "java.js"
++        il2cpp = v8_tmp_dir / "il2cpp.js"
++
+ 
+         v8_options = [
+             "-c", # Compress for smaller code and better performance.
+@@ -110,11 +118,13 @@ def generate_runtime(backends, arch, endian, input_dir, gum_dir, capstone_incdir
+         call_compiler(runtime_reldir / "objc.js", "-o", objc, *v8_options)
+         call_compiler(runtime_reldir / "swift.js", "-o", swift, *v8_options)
+         call_compiler(runtime_reldir / "java.js", "-o", java, *v8_options)
++        call_compiler(runtime_reldir / "il2cpp.js", "-o", il2cpp, *v8_options)
+ 
+         generate_runtime_v8("runtime", output_dir, priv_dir, "gumv8script-runtime.h", [runtime])
+         generate_runtime_v8("objc", output_dir, priv_dir, "gumv8script-objc.h", [objc])
+         generate_runtime_v8("swift", output_dir, priv_dir, "gumv8script-swift.h", [swift])
+         generate_runtime_v8("java", output_dir, priv_dir, "gumv8script-java.h", [java])
++        generate_runtime_v8("il2cpp", output_dir, priv_dir, "gumv8script-il2cpp.h", [il2cpp])
+ 
+     generate_runtime_cmodule(output_dir, "gumcmodule-runtime.h", arch, input_dir, gum_dir, capstone_incdir, libtcc_incdir)
+
+diff --git a/bindings/gumjs/gumquickcore.c b/bindings/gumjs/gumquickcore.c
+index 8e1fe980..eb46ea25 100644
+--- a/bindings/gumjs/gumquickcore.c
++++ b/bindings/gumjs/gumquickcore.c
+@@ -24,6 +24,9 @@
+ #ifdef HAVE_JAVA_BRIDGE
+ # include "gumquickscript-java.h"
+ #endif
++#ifdef HAVE_IL2CPP_BRIDGE
++# include "gumquickscript-il2cpp.h"
++#endif
+ 
+ #include <string.h>
+ #ifdef _MSC_VER
+@@ -169,6 +172,8 @@ GUMJS_DECLARE_GETTER (gumjs_frida_get_heap_size)
+ GUMJS_DECLARE_FUNCTION (gumjs_frida_objc_load)
+ GUMJS_DECLARE_FUNCTION (gumjs_frida_swift_load)
+ GUMJS_DECLARE_FUNCTION (gumjs_frida_java_load)
++GUMJS_DECLARE_FUNCTION (gumjs_frida_il2cpp_load)
++
+ 
+ GUMJS_DECLARE_FUNCTION (gumjs_script_evaluate)
+ GUMJS_DECLARE_FUNCTION (gumjs_script_load)
+@@ -384,6 +389,8 @@ static const JSCFunctionListEntry gumjs_frida_entries[] =
+   JS_CFUNC_DEF ("_loadObjC", 0, gumjs_frida_objc_load),
+   JS_CFUNC_DEF ("_loadSwift", 0, gumjs_frida_swift_load),
+   JS_CFUNC_DEF ("_loadJava", 0, gumjs_frida_java_load),
++  JS_CFUNC_DEF ("_loadIl2Cpp", 0, gumjs_frida_il2cpp_load),
++
+ };
+ 
+ static const JSCFunctionListEntry gumjs_script_entries[] =
+@@ -2021,6 +2028,19 @@ GUMJS_DEFINE_FUNCTION (gumjs_frida_java_load)
+   return loaded;
+ }
+ 
++GUMJS_DEFINE_FUNCTION (gumjs_frida_il2cpp_load)
++{
++  JSValue loaded = JS_FALSE;
++
++#ifdef HAVE_IL2CPP_BRIDGE
++  gum_quick_bundle_load (gumjs_il2cpp_modules, ctx);
++  loaded = JS_TRUE;
++#endif
++
++  return loaded;
++}
++
++
+ GUMJS_DEFINE_FUNCTION (gumjs_script_evaluate)
+ {
+   const gchar * name, * source;
+@@ -2174,6 +2194,12 @@ GUMJS_DEFINE_FUNCTION (gumjs_script_find_source_map)
+     {
+       json = gumjs_java_source_map;
+     }
++#endif
++#ifdef HAVE_IL2CPP_BRIDGE
++    else if (strcmp (name, "/_il2cppjs") == 0)
++    {
++      json = gumjs_il2cpp_source_map;
++    }
+ #endif
+   }
+ 
+diff --git a/bindings/gumjs/gumv8core.cpp b/bindings/gumjs/gumv8core.cpp
+index 1c9d3f44..a898acc1 100644
+--- a/bindings/gumjs/gumv8core.cpp
++++ b/bindings/gumjs/gumv8core.cpp
+@@ -25,6 +25,10 @@
+ #ifdef HAVE_JAVA_BRIDGE
+ # include "gumv8script-java.h"
+ #endif
++#ifdef HAVE_IL2CPP_BRIDGE
++# include "gumv8script-il2cpp.h"
++#endif
++
+ 
+ #include <glib/gprintf.h>
+ #ifdef _MSC_VER
+@@ -191,6 +195,7 @@ GUMJS_DECLARE_GETTER (gumjs_frida_get_heap_size)
+ GUMJS_DECLARE_FUNCTION (gumjs_frida_objc_load)
+ GUMJS_DECLARE_FUNCTION (gumjs_frida_swift_load)
+ GUMJS_DECLARE_FUNCTION (gumjs_frida_java_load)
++GUMJS_DECLARE_FUNCTION (gumjs_frida_il2cpp_load)
+ 
+ GUMJS_DECLARE_FUNCTION (gumjs_script_evaluate)
+ GUMJS_DECLARE_FUNCTION (gumjs_script_load)
+@@ -389,6 +394,8 @@ static const GumV8Function gumjs_frida_functions[] =
+   { "_loadObjC", gumjs_frida_objc_load },
+   { "_loadSwift", gumjs_frida_swift_load },
+   { "_loadJava", gumjs_frida_java_load },
++  { "_loadIl2Cpp", gumjs_frida_il2cpp_load },
++
+ 
+   { NULL, NULL }
+ };
+@@ -1681,6 +1688,21 @@ GUMJS_DEFINE_FUNCTION (gumjs_frida_java_load)
+   info.GetReturnValue ().Set (loaded);
+ }
+ 
++GUMJS_DEFINE_FUNCTION (gumjs_frida_il2cpp_load)
++{
++  bool loaded = false;
++
++#ifdef HAVE_IL2CPP_BRIDGE
++  auto bundle = gum_v8_bundle_new (isolate, gumjs_il2cpp_modules);
++  gum_v8_bundle_run (bundle);
++  gum_v8_bundle_free (bundle);
++
++  loaded = true;
++#endif
++
++  info.GetReturnValue ().Set (loaded);
++}
++
+ GUMJS_DEFINE_FUNCTION (gumjs_script_evaluate)
+ {
+   gchar * name, * source;
+@@ -1815,6 +1837,12 @@ GUMJS_DEFINE_FUNCTION (gumjs_script_find_source_map)
+       {
+         json = gumjs_java_source_map;
+       }
++#endif
++#ifdef HAVE_IL2CPP_BRIDGE
++      else if (strcmp (name, "/_il2cpp.js") == 0)
++      {
++        json = gumjs_il2cpp_source_map;
++      }
+ #endif
+     }
+   }
+diff --git a/bindings/gumjs/meson.build b/bindings/gumjs/meson.build
+index f4d9f85f..c16f9ee5 100644
+--- a/bindings/gumjs/meson.build
++++ b/bindings/gumjs/meson.build
+@@ -258,6 +258,7 @@ gumjs_deps = [
+ 
+ gumjs = library('frida-gumjs-' + api_version, gumjs_sources,
+   c_args: frida_component_cflags,
++  cpp_args: ['-funsigned-char'],
+   override_options: [
+     'cpp_std=c++17',
+     'cpp_eh=none',
+diff --git a/bindings/gumjs/runtime/core.js b/bindings/gumjs/runtime/core.js
+index cdabc715..e03a40db 100644
+--- a/bindings/gumjs/runtime/core.js
++++ b/bindings/gumjs/runtime/core.js
+@@ -147,6 +147,8 @@ Object.defineProperties(engine, {
+   },
+ });
+ 
++Frida._loadIl2Cpp()
++
+ function makeStubBridge() {
+   return Object.freeze({ available: false });
+ }
+diff --git a/meson.build b/meson.build
+index 43ba4ff3..4f6c02fb 100644
+--- a/meson.build
++++ b/meson.build
+@@ -48,7 +48,9 @@ endif
+ 
+ cc = meson.get_compiler('c')
+ 
+-frida_component_cflags = []
++frida_component_cflags = [
++  '-funsigned-char'
++]
+ ndebug = get_option('b_ndebug')
+ optimize_for_prod = ndebug == 'true' or (ndebug == 'if-release' and not get_option('debug'))
+ if optimize_for_prod
+@@ -572,6 +574,10 @@ if have_gumjs
+     cdata.set('HAVE_JAVA_BRIDGE', 1)
+   endif
+ 
++  if get_option('frida_il2cpp_bridge').allowed()
++    cdata.set('HAVE_IL2CPP_BRIDGE', 1)
++  endif
++
+   libsoup_dep = dependency('libsoup-3.0', default_options: [
+     'gssapi=disabled',
+     'ntlm=disabled',
+@@ -644,6 +650,7 @@ install_header_subdir = install_header_basedir + '/gum'
+ 
+ subdir('ext')
+ subdir('gum')
++
+ if not diet
+   subdir('libs')
+   subdir('bindings')
+@@ -656,3 +663,5 @@ endif
+ if build_tests
+   subdir('tests')
+ endif
++
++
+diff --git a/meson.options b/meson.options
+index 30cfb599..e45ce0a2 100644
+--- a/meson.options
++++ b/meson.options
+@@ -65,6 +65,12 @@ option('frida_java_bridge',
+   description: 'Build JavaScript bindings with Java bridge included'
+ )
+ 
++option('frida_il2cpp_bridge',
++  type: 'feature',
++  value: 'auto',
++  description: 'Build JavaScript bindings with Il2Cpp bridge included'
++)
++
+ option('tests',
+   type: 'feature',
+   value: 'auto',
