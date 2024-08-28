@@ -31,6 +31,7 @@ Releases right next door, on the side panel →
 - [https://github.com/CrackerCat/strongR-frida-android](https://github.com/CrackerCat/strongR-frida-android)
 - [https://github.com/hzzheyang/strongR-frida-android](https://github.com/hzzheyang/strongR-frida-android)
 - [https://github.com/Ylarod/Florida](https://github.com/Ylarod/Florida)
+- [https://github.com/thau0x01/frida-patches](https://github.com/thau0x01/frida-patches)
 
 ## Thanks
 
@@ -40,3 +41,4 @@ Releases right next door, on the side panel →
 - [@qtfreet00](https://github.com/qtfreet00)
 - [@hzzheyang](https://github.com/hzzheyang)
 - [@CrackerCat](https://github.com/CrackerCat)
+- [@thau0x01](https://github.com/thau0x01)
