@@ -30,22 +30,16 @@ jobs:
     needs: check
     if: needs.check.outputs.RELEASE_EXISTS == '0'
     steps:
-      - name: Create release
-        id: create
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: | 
-          curl -v -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d@- -o "${tmpfile}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases"
-
-          api_args="${curl_args} -H 'Content-Type: application/json' -d@-"
-          upload_args="${curl_args} -H 'Content-Type: application/octet-stream' -o /dev/null --data-binary @-"
-
-          tmpfile="$(mktemp)"
-          echo '{"tag_name":"${{ needs.check.outputs.FRIDA_VERSION }}","name":"${{ needs.check.outputs.FRIDA_VERSION }}","body":"${{ needs.check.outputs.FRIDA_VERSION }}","draft":true}' | curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d@- -o "${tmpfile}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases"
-
-          echo "RELEASE_ID=$(jq -r .id "${tmpfile}")" >> "${GITHUB_OUTPUT}"
-    outputs:
-      RELEASE_ID: ${{ steps.create.outputs.RELEASE_ID }}
+- name: Create release
+  id: create
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    tmpfile=$(mktemp)
+    echo '{"tag_name":"${{ needs.check.outputs.FRIDA_VERSION }}","name":"${{ needs.check.outputs.FRIDA_VERSION }}","body":"${{ needs.check.outputs.FRIDA_VERSION }}","draft":true}' | curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d@- -o "${tmpfile}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases"
+    echo "RELEASE_ID=$(jq -r .id "${tmpfile}")" >> "${GITHUB_OUTPUT}"
+outputs:
+  RELEASE_ID: ${{ steps.create.outputs.RELEASE_ID }}
 
   build:
     runs-on: ubuntu-22.04
