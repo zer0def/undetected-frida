@@ -96,8 +96,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get update && DEBIAN_FRONTEND=noninteractive sudo apt-get install -y build-essential ninja-build gcc-multilib g++-multilib lib32stdc++-9-dev flex bison libc6-dev libc6-dev-i386 xz-utils plzip zstd pigz gettext-base  # upx tree
-        sudo /opt/hostedtoolcache/Python/3.12.*/x64/bin/pip3 install -U setuptools lief
+        [ $(id -u) -eq 0 ] || SUDO=sudo
+        ${SUDO} apt-get update && DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get install -y build-essential ninja-build gcc-multilib g++-multilib lib32stdc++-9-dev flex bison libc6-dev libc6-dev-i386 xz-utils plzip zstd pigz gettext-base  # upx tree
+        ${SUDO} /opt/hostedtoolcache/Python/3.12.*/x64/bin/pip3 install -U setuptools lief
 
         _CARCH="${{ matrix.arch }}"; if [ "${_CARCH%64}" = "${_CARCH}" ]; then  # && bit_width=32 || bit_width=64
           pushd /opt/hostedtoolcache/Python/3.12.*/x64/include/python3.12; patch -Rp1 <${{ github.workspace }}/pyconfig.h-i686-x86_64.patch; popd
@@ -113,7 +114,9 @@ jobs:
         FRIDA_PREFIX="$(tr -cd 'a-z0-9' </dev/urandom | head -c32)" SESSION_SERVICE="$(tr -cd 'a-f0-9' </dev/urandom | head -c32)"
         set -e
 
-        for k in strongR-frida florida; do for i in "../${k}/"*; do pushd "subprojects/${i##*/}"; for j in "../../../${k}/${i##*/}/"*.patch; do FRIDA_PREFIX="${FRIDA_PREFIX}" SESSION_SERVICE="${SESSION_SERVICE}" envsubst <"${j}" | patch -Np1; done; popd; done; done
+        for k in strongR-frida florida; do  # russian capacity to coherently read may have been vastly overestimated
+          for i in "../${k}/"*; do pushd "subprojects/${i##*/}"; for j in "../../../${k}/${i##*/}/"*.patch; do FRIDA_PREFIX="${FRIDA_PREFIX}" SESSION_SERVICE="${SESSION_SERVICE}" envsubst <"${j}" | patch -Np1; done; popd; done;
+        done
 
         #for j in core gum; do make "${j}-${{ matrix.os }}-${{ matrix.arch }}"; done  # target
         #for j in core gum gumjs; do python releng/mkdevkit.py "frida-${j}" "${{ matrix.os }}-${{ matrix.arch }}" "build/devkits/${{ matrix.os }}/${{ matrix.arch }}/${j}"; done  # devkit
