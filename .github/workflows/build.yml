@@ -14,7 +14,7 @@ jobs:
         run: |
           frida_version="$(curl -fs https://api.github.com/repos/frida/frida/releases | jq -r .[].tag_name | sort -nr | head -n1)"
           frida_version="$(curl -fs https://api.github.com/repos/frida/frida/releases/latest | jq -r .tag_name)"
-          echo "FRIDA_VERSION=${frida_version}" >> "${GITHUB_OUTPUT}"  # gh env?
+          echo "FRIDA_VERSION=${frida_version}" >> "${GITHUB_OUTPUT}"
 
           release_exists=0
           set +e
@@ -27,8 +27,7 @@ jobs:
 
   create:
     runs-on: ubuntu-22.04
-    needs:
-      - check
+    needs: check
     if: needs.check.outputs.RELEASE_EXISTS == '0'
     steps:
       - name: Create release
@@ -36,34 +35,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # might need to use bash arrays for adequate DRY quotation?
           curl_args="-fs -H 'Authorization: token ${GITHUB_TOKEN}'"
           api_args="${curl_args} -H 'Content-Type: application/json' -d@-"
-          upload_args="${curl_args} -H 'Content-Type: application/octet-stream' -o /dev/null --data-binary @-"  # cat | curl --data-binary
+          upload_args="${curl_args} -H 'Content-Type: application/octet-stream' -o /dev/null --data-binary @-"
 
-          tmpfile="$(mktemp)"  # a bit excessive, but eh
-          echo '{"tag_name":"${{ needs.check.outputs.FRIDA_VERSION }}","name":"${{ needs.check.outputs.FRIDA_VERSION }}","body":"${{ needs.check.outputs.FRIDA_VERSION }}","draft":true}' | curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d@- "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases" >"${tmpfile}"
+          tmpfile="$(mktemp)"
+          echo '{"tag_name":"${{ needs.check.outputs.FRIDA_VERSION }}","name":"${{ needs.check.outputs.FRIDA_VERSION }}","body":"${{ needs.check.outputs.FRIDA_VERSION }}","draft":true}' | curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d@- -o "${tmpfile}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases"
 
           echo "RELEASE_ID=$(jq -r .id "${tmpfile}")" >> "${GITHUB_OUTPUT}"
-          #echo "UPLOAD_URL=$(jq -r .upload_url "${tmpfile}")" >> "${GITHUB_OUTPUT}"
     outputs:
       RELEASE_ID: ${{ steps.create.outputs.RELEASE_ID }}
 
   build:
     runs-on: ubuntu-22.04
-    needs:
+    needs: 
       - check
       - create
     if: needs.check.outputs.RELEASE_EXISTS == '0'
     strategy:
       matrix:
-        arch:
-          - arm64
-          - arm
-          - x86_64
-          - x86
-        os:
-          - android
+        arch: [arm64, arm, x86_64, x86]
+        os: [android]
     steps:
       - uses: actions/checkout@v4
 
@@ -94,10 +86,10 @@ jobs:
       - name: Install dependencies
         run: |
           [ $(id -u) -eq 0 ] || SUDO=sudo
-          ${SUDO} apt-get update && DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get install -y build-essential ninja-build gcc-multilib g++-multilib lib32stdc++-9-dev flex bison libc6-dev libc6-dev-i386 xz-utils plzip zstd pigz gettext-base  # upx tree
+          ${SUDO} apt-get update && DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get install -y build-essential ninja-build gcc-multilib g++-multilib lib32stdc++-9-dev flex bison libc6-dev libc6-dev-i386
           ${SUDO} /opt/hostedtoolcache/Python/3.12.*/x64/bin/pip3 install -U setuptools lief
 
-          _CARCH="${{ matrix.arch }}"; if [ "${_CARCH%64}" = "${_CARCH}" ]; then  # && bit_width=32 || bit_width=64
+          _CARCH="${{ matrix.arch }}"; if [ "${_CARCH%64}" = "${_CARCH}" ]; then
             pushd /opt/hostedtoolcache/Python/3.12.*/x64/include/python3.12; patch -Rp1 <${{ github.workspace }}/pyconfig.h-i686-x86_64.patch; popd
           fi
 
@@ -121,7 +113,6 @@ jobs:
       - name: Apply patch to generate-runtime.py
         run: |
           cd frida/bindings/gumjs
-          # Применяем патч для generate-runtime.py
           patch -p1 <<EOF
           --- a/bindings/gumjs/generate-runtime.py
           +++ b/bindings/gumjs/generate-runtime.py
@@ -165,29 +156,25 @@ jobs:
             done
           done
 
-          ./configure --prefix="${PWD}/build" --host="${{ matrix.os }}-${{ matrix.arch }}" --enable-frida-tools --enable-gadget --enable-server --enable-portal --enable-gadget -- -Dfrida-gum:devkits=gum,gumjs -Dfrida-core:devkits=core
+          ./configure --prefix="${PWD}/build" --host="${{ matrix.os }}-${{ matrix.arch }}" --enable-frida-tools --enable-gadget --enable-server --enable-portal --enable-gadget -- -Dfrida-gum:devkits=glib
           make
           popd
 
       - name: Ship artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: | 
+        run: |
           FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
-          gh_release_put(){ curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/octet-stream" -o /dev/null --data-binary "@${1}" "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ needs.create.outputs.RELEASE_ID }}/assets?name=${2}"; }
+          gh_release_put(){ curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/octet-stream" -o /dev/null --data-binary "@${1}" "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/assets?name=${2}" }
 
           export XZ_OPT="-9e -T0" ZSTD_NBTHREADS=0 ZSTD_CLEVEL=19
-          ZSTD_OPT="-${ZSTD_CLEVEL:-22} --ultra -T${ZSTD_NBTHREADS:-0}" LZIP_OPT="-n$(nproc) -9" PIGZ="-p$(nproc) -11"  # GZIP="-9" PIGZ="${GZIP}"
-          #for compr in "xz ${XZ_OPT}:xz" "plzip ${LZIP_OPT}:lz"; do  # "pigz ${PIGZ}:gz" "zstd ${ZSTD_OPT}:zst"; do …; done
+          ZSTD_OPT="-${ZSTD_CLEVEL:-22} --ultra -T${ZSTD_NBTHREADS:-0}" LZIP_OPT="-n$(nproc) -9" PIGZ="-p$(nproc) -11"
           compr="xz ${XZ_OPT}:xz"
 
           pushd frida
           gh_release_put subprojects/frida-core/src/anti-anti-frida.py anti-anti-frida.py ||:
 
-          for j in server inject; do  # bin
-            #upx --lzma --best "build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}"
-
-            #_src="build/frida-${{ matrix.os }}-${{ matrix.arch }}/bin/frida-${j}"
+          for j in server inject; do
             _src="build/subprojects/frida-core/${j}/frida-${j}"
             ${compr%:*} -k "${_src}"
             gh_release_put "${_src}.${compr#*:}" "${GITHUB_REPOSITORY##*/}-${j}-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.${compr#*:}"
@@ -195,22 +182,16 @@ jobs:
           python subprojects/frida-core/src/anti-anti-frida.py build/subprojects/frida-core/server/frida-server
           mv build/subprojects/frida-core/server/frida-server ../frida-server-${{ matrix.arch }}
 
-          #[ "$(echo ${{ matrix.arch }} | sed 's/64$//')" != "${{ matrix.arch }}" ] && bit_width=64 || bit_width=32
-          #upx --lzma --best "build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so"
-          #_src="build/frida-${{ matrix.os }}-${{ matrix.arch }}/lib/frida/${bit_width}/frida-gadget.so"
-
           _src="build/subprojects/frida-core/lib/gadget/frida-gadget.so"
           ${compr%:*} -k "${_src}"
           gh_release_put "${_src}.${compr#*:}" "${GITHUB_REPOSITORY##*/}-gadget-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.so.${compr#*:}"
 
-          #python subprojects/frida-core/src/anti-anti-frida.py "${_src}"
           rm "${_src}.${compr#*:}"; ${compr%:*} -k "${_src}"
           mv "${_src}.${compr#*:}" "../libgadget-${{ matrix.arch }}.so.${compr#*:}"
 
-          for j in $(find build/subprojects -iname '*-example.c'); do  # devkit
+          for j in $(find build/subprojects -iname '*-example.c'); do
             _j="${j##*/}"
             _tar="build/${_j%-example.c}-devkit-${{ matrix.os }}-${{ matrix.arch }}.tar"
-            #_tgt="${GITHUB_REPOSITORY##*/}-${j}-devkit-${FRIDA_VERSION}-${{{ matrix.os }}-${{ matrix.arch }}.tar.${compr#*:}"
             _tgt="undetected-${_j%-example.c}-devkit-${FRIDA_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.tar.${compr#*:}"
 
             tar -cf "${_tar}" -C "${j%/*}" .
@@ -251,7 +232,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
-          gh_release_put(){ curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/octet-stream" -o /dev/null --data-binary "@${1}" "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ needs.create.outputs.RELEASE_ID }}/assets?name=${2}"; }
+          gh_release_put(){ curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/octet-stream" -o /dev/null --data-binary "@${1}" "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/assets?name=${2}" }
 
           zy_dir="$(mktemp -d)"
           zy_ver="$(curl -fs https://api.github.com/repos/lico-n/ZygiskFrida/releases/latest | jq -r .tag_name)"
