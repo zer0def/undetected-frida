@@ -172,7 +172,7 @@ jobs:
       - name: Ship artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
+        run: | 
           FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
           gh_release_put(){ curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/octet-stream" -o /dev/null --data-binary "@${1}" "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ needs.create.outputs.RELEASE_ID }}/assets?name=${2}"; }
 
