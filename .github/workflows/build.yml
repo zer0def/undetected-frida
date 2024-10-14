@@ -34,8 +34,9 @@ jobs:
         id: create
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          curl_args="-fs -H 'Authorization: token ${GITHUB_TOKEN}'"
+        run: | 
+          curl -v -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d@- -o "${tmpfile}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases"
+
           api_args="${curl_args} -H 'Content-Type: application/json' -d@-"
           upload_args="${curl_args} -H 'Content-Type: application/octet-stream' -o /dev/null --data-binary @-"
 
