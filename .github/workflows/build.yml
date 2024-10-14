@@ -103,63 +103,74 @@ jobs:
         _CARCH="${{ matrix.arch }}"; if [ "${_CARCH%64}" = "${_CARCH}" ]; then  # && bit_width=32 || bit_width=64
           pushd /opt/hostedtoolcache/Python/3.12.*/x64/include/python3.12; patch -Rp1 <${{ github.workspace }}/pyconfig.h-i686-x86_64.patch; popd
         fi
+ 
   - name: Clone frida-java-bridge
-      run: |
-        git clone https://github.com/frida/frida-java-bridge.git
-        cd frida-java-bridge
-        npm install 
-        cd ..
+    run: |
+      git clone https://github.com/frida/frida-java-bridge.git
+      cd frida-java-bridge
+      npm install 
+      cd ..
 
-    - name: Clone Frida
-      run: |
-        export ANDROID_NDK="${ANDROID_NDK%/*}/25.2.9519653"; export ANDROID_NDK_HOME="${ANDROID_NDK}" ANDROID_NDK_ROOT="${ANDROID_NDK}" ANDROID_NDK_LATEST_HOME="${ANDROID_NDK}"
-        FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
-        git clone --recurse-submodules https://github.com/frida/frida -b "${FRIDA_VERSION}"; pushd frida
+  - name: Clone Frida
+    run: |
+      export ANDROID_NDK="${ANDROID_NDK%/*}/25.2.9519653"
+      export ANDROID_NDK_HOME="${ANDROID_NDK}"
+      export ANDROID_NDK_ROOT="${ANDROID_NDK}"
+      export ANDROID_NDK_LATEST_HOME="${ANDROID_NDK}"
+      FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
+      git clone --recurse-submodules https://github.com/frida/frida -b "${FRIDA_VERSION}"; pushd frida
+      popd
 
-    - name: Apply patch to generate-runtime.py
-      run: |
-        cd bindings/gumjs
-        # Применяем патч для generate-runtime.py
-        patch -p1 <<EOF
-        --- a/bindings/gumjs/generate-runtime.py
-        +++ b/bindings/gumjs/generate-runtime.py
-        @@ -37,6 +37,12 @@ def main(argv):
-         
-         def generate_runtime(output_dir, priv_dir, input_dir, gum_dir, capstone_incdir, libtcc_incdir, npm, quickcompile, backends, arch, endian):
-             frida_compile = priv_dir / "node_modules" / ".bin" / make_script_filename("frida-compile")
-        +
-        +    subprocess.run([npm, "link", "frida-java-bridge"],
-        +                   capture_output=True,
-        +                   cwd=priv_dir,
-        +                   check=True)
-        +
-             if not frida_compile.exists():
-                 if priv_dir.exists():
-                     shutil.rmtree(priv_dir)
-        EOF
-        popd
-        
-    - name: Build Frida
-      run: |
-        export ANDROID_NDK="${ANDROID_NDK%/*}/25.2.9519653"; export ANDROID_NDK_HOME="${ANDROID_NDK}" ANDROID_NDK_ROOT="${ANDROID_NDK}" ANDROID_NDK_LATEST_HOME="${ANDROID_NDK}"
-        FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
-        git clone --recurse-submodules https://github.com/frida/frida -b "${FRIDA_VERSION}"; pushd frida
+  - name: Apply patch to generate-runtime.py
+    run: |
+      cd frida/bindings/gumjs
+      # Применяем патч для generate-runtime.py
+      patch -p1 <<EOF
+      --- a/bindings/gumjs/generate-runtime.py
+      +++ b/bindings/gumjs/generate-runtime.py
+      @@ -37,6 +37,12 @@ def main(argv):
+       
+       def generate_runtime(output_dir, priv_dir, input_dir, gum_dir, capstone_incdir, libtcc_incdir, npm, quickcompile, backends, arch, endian):
+           frida_compile = priv_dir / "node_modules" / ".bin" / make_script_filename("frida-compile")
+      +
+      +    subprocess.run([npm, "link", "frida-java-bridge"],
+      +                   capture_output=True,
+      +                   cwd=priv_dir,
+      +                   check=True)
+      +
+           if not frida_compile.exists():
+               if priv_dir.exists():
+                   shutil.rmtree(priv_dir)
+      EOF
+      popd
+      
+  - name: Build Frida
+    run: |
+      export ANDROID_NDK="${ANDROID_NDK%/*}/25.2.9519653"
+      export ANDROID_NDK_HOME="${ANDROID_NDK}"
+      export ANDROID_NDK_ROOT="${ANDROID_NDK}"
+      export ANDROID_NDK_LATEST_HOME="${ANDROID_NDK}"
+      FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
+      pushd frida
 
-        set +e
-        FRIDA_PREFIX="$(tr -cd 'a-z0-9' </dev/urandom | head -c32)" SESSION_SERVICE="$(tr -cd 'a-f0-9' </dev/urandom | head -c32)"
-        set -e
+      set +e
+      FRIDA_PREFIX="$(tr -cd 'a-z0-9' </dev/urandom | head -c32)"
+      SESSION_SERVICE="$(tr -cd 'a-f0-9' </dev/urandom | head -c32)"
+      set -e
 
-        for k in strongR-frida florida; do  # russian capacity to coherently read may have been vastly overestimated
-          for i in "../${k}/"*; do pushd "subprojects/${i##*/}"; for j in "../../../${k}/${i##*/}/"*.patch; do FRIDA_PREFIX="${FRIDA_PREFIX}" SESSION_SERVICE="${SESSION_SERVICE}" envsubst <"${j}" | patch -Np1; done; popd; done;
+      for k in strongR-frida florida; do
+        for i in "../${k}/"*; do
+          pushd "subprojects/${i##*/}"
+          for j in "../../../${k}/${i##*/}/"*.patch; do
+            FRIDA_PREFIX="${FRIDA_PREFIX}" SESSION_SERVICE="${SESSION_SERVICE}" envsubst <"${j}" | patch -Np1
+          done
+          popd
         done
+      done
 
-        #for j in core gum; do make "${j}-${{ matrix.os }}-${{ matrix.arch }}"; done  # target
-        #for j in core gum gumjs; do python releng/mkdevkit.py "frida-${j}" "${{ matrix.os }}-${{ matrix.arch }}" "build/devkits/${{ matrix.os }}/${{ matrix.arch }}/${j}"; done  # devkit
-
-        ./configure --prefix="${PWD}/build" --host="${{ matrix.os }}-${{ matrix.arch }}" --enable-frida-tools --enable-gadget --enable-server --enable-portal --enable-gadget -- -Dfrida-gum:devkits=gum,gumjs -Dfrida-core:devkits=core
-        make
-        popd
-
+      ./configure --prefix="${PWD}/build" --host="${{ matrix.os }}-${{ matrix.arch }}" --enable-frida-tools --enable-gadget --enable-server --enable-portal --enable-gadget -- -Dfrida-gum:devkits=gum,gumjs -Dfrida-core:devkits=core
+      make
+      popd
     - name: Ship artifacts
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
