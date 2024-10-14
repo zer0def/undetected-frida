@@ -115,6 +115,7 @@ jobs:
       - name: Apply patch to generate-runtime.py
         run: |
           cd frida/bindings/gumjs
+          # love my no-op patches & refactors, блин 🤡
           patch -p1 <<EOF
           --- a/bindings/gumjs/generate-runtime.py
           +++ b/bindings/gumjs/generate-runtime.py
