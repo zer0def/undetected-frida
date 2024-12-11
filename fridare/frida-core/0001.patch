@@ -11,15 +11,16 @@ index aaff50ce..b990cf21 100644
 +            print(f"section={section.name} offset={hex(section.file_offset + addr)} {patch_str} -> {random_name}{patch_str[5:]}"),
 +            binary.patch_address(section.file_offset+addr, [ord(n) for n in random_name+patch_str[5:]])
 +        ) for section in binary.sections if section.name == ".rodata"
-+        for patch_str in ["frida_server_","frida-main-loop","frida:rpc","frida-agent-<arch>.so","frida-agent-arm.so","frida-agent-arm64.so","frida-agent-32.so","frida-agent-64.so"]
++        #for patch_str in ["frida_server_","frida-main-loop","frida:rpc","frida-agent-<arch>.so","frida-agent-arm.so","frida-agent-arm64.so","frida-agent-32.so","frida-agent-64.so"]
++        for patch_str in ["frida_server_","frida-main-loop","frida-agent-<arch>.so","frida-agent-arm.so","frida-agent-arm64.so","frida-agent-32.so","frida-agent-64.so"]
 +        for addr in section.search_all(patch_str)
 +    ]
-+    [
-+        (
-+            print(f"section={section.name} offset={hex(section.file_offset + addr)} frida:rpc -> {random_name}:rpc"),
-+            binary.patch_address(section.file_offset+addr, [ord(n) for n in random_name+":rpc"])
-+        ) for section in binary.sections if section.name == ".text" for addr in section.search_all("frida:rpc")
-+    ]
++    #[
++    #    (
++    #        print(f"section={section.name} offset={hex(section.file_offset + addr)} frida:rpc -> {random_name}:rpc"),
++    #        binary.patch_address(section.file_offset+addr, [ord(n) for n in random_name+":rpc"])
++    #    ) for section in binary.sections if section.name == ".text" for addr in section.search_all("frida:rpc")
++    #]
 +    [
 +        (
 +            print(f"section={section.name} offset={hex(section.file_offset + addr)} gum- -> {random_name[:3]}-"),
