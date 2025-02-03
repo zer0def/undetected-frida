@@ -1,0 +1,13 @@
+diff --git a/lib/gadget/gadget.vala b/lib/gadget/gadget.vala
+index 9b2aa92b..1b6aabbd 100644
+--- a/lib/gadget/gadget.vala
++++ b/lib/gadget/gadget.vala
+@@ -1762,7 +1762,7 @@ namespace Frida.Gadget {
+ 			private HostApplicationInfo this_app;
+ 			private HostProcessInfo this_process;
+ 			private TimeoutSource? ping_timer;
+-			private bool resume_on_attach = true;
++			private bool resume_on_attach = false;
+ 
+ 			public ControlChannel (ControlServer parent, DBusConnection connection) {
+ 				Object (parent: parent, connection: connection);
