@@ -1,0 +1,397 @@
+## i could try to slim down the differences, but this is… effort not warranting further effort
+# source (a): frida-16.6.6 gumjs devkit
+# target (b): androgum "detection bypass" gumjs devkit, based on frida 16.2.1
+diff --git a/frida-gumjs.h b/frida-gumjs.h
+index b80ac36..bdd603a 100644
+--- a/frida-gumjs.h	2025-02-15 10:27:51.185767111 +0100
++++ b/frida-gumjs.h	2025-02-15 10:27:53.159115580 +0100
+@@ -2680,11 +2680,6 @@
+ #define g_ptr_array_steal_index _frida_g_ptr_array_steal_index
+ #define g_ptr_array_steal_index_fast _frida_g_ptr_array_steal_index_fast
+ #define g_ptr_array_unref _frida_g_ptr_array_unref
+-#define g_ptr_set_add _frida_g_ptr_set_add
+-#define g_ptr_set_foreach _frida_g_ptr_set_foreach
+-#define g_ptr_set_free _frida_g_ptr_set_free
+-#define g_ptr_set_new _frida_g_ptr_set_new
+-#define g_ptr_set_remove _frida_g_ptr_set_remove
+ #define g_qsort_with_data _frida_g_qsort_with_data
+ #define g_quark_from_static_string _frida_g_quark_from_static_string
+ #define g_quark_from_string _frida_g_quark_from_string
+@@ -3796,6 +3791,10 @@
+ #define g_timer_reset _frida_g_timer_reset
+ #define g_timer_start _frida_g_timer_start
+ #define g_timer_stop _frida_g_timer_stop
++#define g_tinylist_foreach _frida_g_tinylist_foreach
++#define g_tinylist_free _frida_g_tinylist_free
++#define g_tinylist_prepend _frida_g_tinylist_prepend
++#define g_tinylist_remove _frida_g_tinylist_remove
+ #define g_tls_authentication_mode_get_type _frida_g_tls_authentication_mode_get_type
+ #define g_tls_backend_get_certificate_type _frida_g_tls_backend_get_certificate_type
+ #define g_tls_backend_get_client_connection_type _frida_g_tls_backend_get_client_connection_type
+@@ -61751,13 +61750,6 @@ GType gum_attach_return_get_type (void)
+ GType gum_replace_return_get_type (void) G_GNUC_CONST;
+ #define GUM_TYPE_REPLACE_RETURN (gum_replace_return_get_type ())
+ 
+-/* Enumerations from "gummodule.h" */
+-GType gum_import_type_get_type (void) G_GNUC_CONST;
+-#define GUM_TYPE_IMPORT_TYPE (gum_import_type_get_type ())
+-GType gum_export_type_get_type (void) G_GNUC_CONST;
+-#define GUM_TYPE_EXPORT_TYPE (gum_export_type_get_type ())
+-GType gum_symbol_type_get_type (void) G_GNUC_CONST;
+-#define GUM_TYPE_SYMBOL_TYPE (gum_symbol_type_get_type ())
+ GType gum_dependency_type_get_type (void) G_GNUC_CONST;
+ #define GUM_TYPE_DEPENDENCY_TYPE (gum_dependency_type_get_type ())
+ 
+@@ -62302,6 +62294,56 @@ enum _GumRelocationScenario
+     (((gint64) (i)) >= (gint64) G_MININT32 && \
+      ((gint64) (i)) <= (gint64) G_MAXINT32)
+ 
++# define GUM_DECLARE_FINAL_TYPE(ModuleObjName, module_obj_name, MODULE, \
++      OBJ_NAME, ParentName) \
++    G_DECLARE_FINAL_TYPE (ModuleObjName, module_obj_name, MODULE, OBJ_NAME, \
++      ParentName)
++# define GUM_DECLARE_INTERFACE(ModuleObjName, module_obj_name, MODULE, \
++      OBJ_NAME, PrerequisiteName) \
++    G_DECLARE_INTERFACE (ModuleObjName, module_obj_name, MODULE, OBJ_NAME, \
++      PrerequisiteName)
++# define GUM_DEFINE_BOXED_TYPE(TypeName, type_name, copy_func, free_func) \
++    G_DEFINE_BOXED_TYPE (TypeName, type_name, copy_func, free_func)
++# define gum_object_ref(object) g_object_ref (object)
++# define gum_object_unref(object) g_object_unref (object)
++# define gum_clear_object(object_ptr) \
++    g_clear_pointer ((object_ptr), g_object_unref)
++
++#else
++
++# define GUM_DECLARE_FINAL_TYPE(ModuleObjName, module_obj_name, MODULE, \
++      OBJ_NAME, ParentName) \
++    typedef struct _##ModuleObjName ModuleObjName; \
++    \
++    G_GNUC_UNUSED static inline ModuleObjName * MODULE##_##OBJ_NAME ( \
++      gpointer obj) \
++    { \
++      return obj; \
++    }
++# define GUM_DECLARE_INTERFACE(ModuleObjName, module_obj_name, MODULE, \
++      OBJ_NAME, PrerequisiteName) \
++    typedef struct _##ModuleObjName ModuleObjName; \
++    \
++    G_GNUC_UNUSED static inline ModuleObjName * MODULE##_##OBJ_NAME ( \
++      gpointer obj) \
++    { \
++      return obj; \
++    }
++# define GUM_DEFINE_BOXED_TYPE(TypeName, type_name, copy_func, free_func)
++# define gum_clear_object(object_ptr) \
++    g_clear_pointer ((object_ptr), gum_object_unref)
++
++typedef struct _GumObject GumObject;
++
++struct _GumObject
++{
++  gint ref_count;
++  void (* finalize) (GumObject * object);
++};
++
++GUM_API gpointer gum_object_ref (gpointer object);
++GUM_API void gum_object_unref (gpointer object);
++
+ #ifdef G_NORETURN
+ # define GUM_NORETURN G_NORETURN
+ #else
+@@ -62556,8 +62598,6 @@ struct _GumFileMapping
+   gsize size;
+ };
+ 
+-typedef gboolean (* GumFoundRangeFunc) (const GumRangeDetails * details,
+-    gpointer user_data);
+ typedef void (* GumMemoryPatchApplyFunc) (gpointer mem, gpointer user_data);
+ typedef gboolean (* GumMemoryScanMatchFunc) (GumAddress address, gsize size,
+     gpointer user_data);
+@@ -62671,15 +62711,11 @@ G_END_DECLS
+  * Licence: wxWindows Library Licence, Version 3.1
+  */
+ 
+-#ifndef __GUM_MODULE_H__
+-#define __GUM_MODULE_H__
+-
+-
+ G_BEGIN_DECLS
+ 
+-#define GUM_TYPE_MODULE (gum_module_get_type ())
+-G_DECLARE_INTERFACE (GumModule, gum_module, GUM, MODULE, GObject)
+-
++typedef guint GumImportType;
++typedef guint GumExportType;
++typedef guint GumSymbolType;
+ typedef struct _GumImportDetails GumImportDetails;
+ typedef struct _GumExportDetails GumExportDetails;
+ typedef struct _GumSymbolDetails GumSymbolDetails;
+@@ -62695,23 +62731,22 @@ typedef gboolean (* GumFoundSymbolFunc)
+     gpointer user_data);
+ typedef gboolean (* GumFoundSectionFunc) (const GumSectionDetails * details,
+     gpointer user_data);
+-typedef gboolean (* GumFoundDependencyFunc) (
+-    const GumDependencyDetails * details, gpointer user_data);
+-typedef GumAddress (* GumResolveExportFunc) (const char * module_name,
+-    const char * symbol_name, gpointer user_data);
+ 
+-typedef enum {
++enum _GumImportType
++{
+   GUM_IMPORT_UNKNOWN,
+   GUM_IMPORT_FUNCTION,
+   GUM_IMPORT_VARIABLE
+-} GumImportType;
++};
+ 
+-typedef enum {
++enum _GumExportType
++{
+   GUM_EXPORT_FUNCTION = 1,
+   GUM_EXPORT_VARIABLE
+-} GumExportType;
++};
+ 
+-typedef enum {
++enum _GumSymbolType
++{
+   /* Common */
+   GUM_SYMBOL_UNKNOWN,
+   GUM_SYMBOL_SECTION,
+@@ -62728,32 +62763,6 @@ typedef enum {
+   GUM_SYMBOL_FILE,
+   GUM_SYMBOL_COMMON,
+   GUM_SYMBOL_TLS,
+-} GumSymbolType;
+-
+-struct _GumModuleInterface
+-{
+-  GTypeInterface parent;
+-
+-  const gchar * (* get_name) (GumModule * self);
+-  const gchar * (* get_path) (GumModule * self);
+-  const GumMemoryRange * (* get_range) (GumModule * self);
+-  void (* ensure_initialized) (GumModule * self);
+-  void (* enumerate_imports) (GumModule * self, GumFoundImportFunc func,
+-      gpointer user_data);
+-  void (* enumerate_exports) (GumModule * self, GumFoundExportFunc func,
+-      gpointer user_data);
+-  void (* enumerate_symbols) (GumModule * self, GumFoundSymbolFunc func,
+-      gpointer user_data);
+-  void (* enumerate_ranges) (GumModule * self, GumPageProtection prot,
+-      GumFoundRangeFunc func, gpointer user_data);
+-  void (* enumerate_sections) (GumModule * self, GumFoundSectionFunc func,
+-      gpointer user_data);
+-  void (* enumerate_dependencies) (GumModule * self,
+-      GumFoundDependencyFunc func, gpointer user_data);
+-  GumAddress (* find_export_by_name) (GumModule * self,
+-      const gchar * symbol_name);
+-  GumAddress (* find_symbol_by_name) (GumModule * self,
+-      const gchar * symbol_name);
+ };
+ 
+ struct _GumImportDetails
+@@ -62809,31 +62818,27 @@ struct _GumDependencyDetails
+   GumDependencyType type;
+ };
+ 
+-GUM_API GumModule * gum_module_load (const gchar * module_name,
++GUM_API gboolean gum_module_load (const gchar * module_name,
+     GError ** error);
+ 
+-GUM_API const gchar * gum_module_get_name (GumModule * self);
+-GUM_API const gchar * gum_module_get_path (GumModule * self);
+-GUM_API const GumMemoryRange * gum_module_get_range (GumModule * self);
+ 
+-GUM_API void gum_module_ensure_initialized (GumModule * self);
+-GUM_API void gum_module_enumerate_imports (GumModule * self,
++GUM_API gboolean gum_module_ensure_initialized (const gchar * module_name);
++GUM_API void gum_module_enumerate_imports (const gchar * module_name,
+     GumFoundImportFunc func, gpointer user_data);
+-GUM_API void gum_module_enumerate_exports (GumModule * self,
++GUM_API void gum_module_enumerate_exports (const gchar * module_name,
+     GumFoundExportFunc func, gpointer user_data);
+-GUM_API void gum_module_enumerate_symbols (GumModule * self,
++GUM_API void gum_module_enumerate_symbols (const gchar * module_name,
+     GumFoundSymbolFunc func, gpointer user_data);
+-GUM_API void gum_module_enumerate_ranges (GumModule * self,
++GUM_API void gum_module_enumerate_ranges (const gchar * module_name,
+     GumPageProtection prot, GumFoundRangeFunc func, gpointer user_data);
+-GUM_API void gum_module_enumerate_sections (GumModule * self,
++GUM_API void gum_module_enumerate_sections (const gchar * module_name,
+     GumFoundSectionFunc func, gpointer user_data);
+-GUM_API void gum_module_enumerate_dependencies (GumModule * self,
++GUM_API void gum_module_enumerate_dependencies (const gchar * module_name,
+     GumFoundDependencyFunc func, gpointer user_data);
+-GUM_API GumAddress gum_module_find_export_by_name (GumModule * self,
+-    const gchar * symbol_name);
+-GUM_API GumAddress gum_module_find_global_export_by_name (
++GUM_API GumAddress gum_module_find_base_address (const gchar * module_name);
++GUM_API GumAddress gum_module_find_export_by_name (const gchar * module_name,
+     const gchar * symbol_name);
+-GUM_API GumAddress gum_module_find_symbol_by_name (GumModule * self,
++GUM_API GumAddress gum_module_find_symbol_by_name (const gchar * module_name,
+     const gchar * symbol_name);
+ 
+ G_END_DECLS
+@@ -62896,10 +62901,14 @@ typedef void (* GumModifyThreadFunc) (Gu
+     GumCpuContext * cpu_context, gpointer user_data);
+ typedef gboolean (* GumFoundThreadFunc) (const GumThreadDetails * details,
+     gpointer user_data);
+-typedef gboolean (* GumFoundModuleFunc) (GumModule * module,
++typedef gboolean (* GumFoundModuleFunc) (const GumModuleDetails * details,
+     gpointer user_data);
++typedef gboolean (* GumFoundDependencyFunc) (
++    const GumDependencyDetails * details, gpointer user_data);
+ typedef gboolean (* GumFoundMallocRangeFunc) (
+     const GumMallocRangeDetails * details, gpointer user_data);
++typedef GumAddress (* GumResolveExportFunc) (const char * module_name,
++    const char * symbol_name, gpointer user_data);
+ 
+ GUM_API GumOS gum_process_get_native_os (void);
+ GUM_API GumTeardownRequirement gum_process_get_teardown_requirement (void);
+@@ -62915,10 +62924,10 @@ GUM_API gboolean gum_process_modify_thre
+     GumModifyThreadFunc func, gpointer user_data, GumModifyThreadFlags flags);
+ GUM_API void gum_process_enumerate_threads (GumFoundThreadFunc func,
+     gpointer user_data);
+-GUM_API GumModule * gum_process_get_main_module (void);
+-GUM_API GumModule * gum_process_get_libc_module (void);
+-GUM_API GumModule * gum_process_find_module_by_name (const gchar * name);
+-GUM_API GumModule * gum_process_find_module_by_address (GumAddress address);
++GUM_API const GumModuleDetails * gum_process_get_main_module (void);
++GUM_API const gchar * gum_process_query_libc_name (void);
++GUM_API gboolean gum_process_resolve_module_pointer (gconstpointer ptr,
++    gchar ** path, GumMemoryRange * range);
+ GUM_API void gum_process_enumerate_modules (GumFoundModuleFunc func,
+     gpointer user_data);
+ GUM_API void gum_process_enumerate_ranges (GumPageProtection prot,
+@@ -62944,6 +62953,11 @@ GUM_API gboolean gum_thread_unset_hardwa
+ GUM_API const gchar * gum_code_signing_policy_to_string (
+     GumCodeSigningPolicy policy);
+ 
++GUM_API GType gum_module_details_get_type (void) G_GNUC_CONST;
++GUM_API GumModuleDetails * gum_module_details_copy (
++    const GumModuleDetails * module);
++GUM_API void gum_module_details_free (GumModuleDetails * module);
++
+ GUM_API const gchar * gum_symbol_type_to_string (GumSymbolType type);
+ 
+ G_END_DECLS
+@@ -63270,7 +63284,6 @@ struct _GumDarwinModule
+ 
+   GArray * segments;
+   GArray * text_ranges;
+-  gsize text_size;
+ 
+   const guint8 * rebases;
+   const guint8 * rebases_end;
+@@ -65322,7 +65335,7 @@ G_END_DECLS
+ G_BEGIN_DECLS
+ 
+ typedef struct _GumKernelModuleRangeDetails GumKernelModuleRangeDetails;
+-typedef struct _GumKernelModuleDetails GumKernelModuleDetails;
++typedef struct _GumModuleDetails GumModuleDetails;
+ 
+ struct _GumKernelModuleRangeDetails
+ {
+@@ -65332,7 +65345,7 @@ struct _GumKernelModuleRangeDetails
+   GumPageProtection protection;
+ };
+ 
+-struct _GumKernelModuleDetails
++struct _GumModuleDetails
+ {
+   const gchar * name;
+   const GumMemoryRange * range;
+@@ -65341,8 +65354,6 @@ struct _GumKernelModuleDetails
+ 
+ typedef gboolean (* GumFoundKernelModuleRangeFunc) (
+     const GumKernelModuleRangeDetails * details, gpointer user_data);
+-typedef gboolean (* GumFoundKernelModuleFunc) (
+-    const GumKernelModuleDetails * details, gpointer user_data);
+ 
+ GUM_API gboolean gum_kernel_api_is_available (void);
+ GUM_API guint gum_kernel_query_page_size (void);
+@@ -65362,7 +65373,7 @@ GUM_API void gum_kernel_enumerate_ranges
+ GUM_API void gum_kernel_enumerate_module_ranges (const gchar * module_name,
+     GumPageProtection prot, GumFoundKernelModuleRangeFunc func,
+     gpointer user_data);
+-GUM_API void gum_kernel_enumerate_modules (GumFoundKernelModuleFunc func,
++GUM_API void gum_kernel_enumerate_modules (GumFoundModuleFunc func,
+     gpointer user_data);
+ GUM_API GumAddress gum_kernel_find_base_address (void);
+ GUM_API void gum_kernel_set_base_address (GumAddress base);
+@@ -65633,19 +65644,19 @@ G_BEGIN_DECLS
+ #define GUM_TYPE_MODULE_MAP (gum_module_map_get_type ())
+ G_DECLARE_FINAL_TYPE (GumModuleMap, gum_module_map, GUM, MODULE_MAP, GObject)
+ 
+-typedef gboolean (* GumModuleMapFilterFunc) (GumModule * module,
++typedef gboolean (* GumModuleMapFilterFunc) (const GumModuleDetails * details,
+     gpointer user_data);
+ 
+ GUM_API GumModuleMap * gum_module_map_new (void);
+ GUM_API GumModuleMap * gum_module_map_new_filtered (GumModuleMapFilterFunc func,
+     gpointer data, GDestroyNotify data_destroy);
+ 
+-GUM_API GumModule * gum_module_map_find (GumModuleMap * self,
++GUM_API const GumModuleDetails * gum_module_map_find (GumModuleMap * self,
+     GumAddress address);
+ 
+ GUM_API void gum_module_map_update (GumModuleMap * self);
+ 
+-GUM_API GPtrArray * gum_module_map_get_values (GumModuleMap * self);
++GUM_API GArray * gum_module_map_get_values (GumModuleMap * self);
+ 
+ G_END_DECLS
+ 
+diff --git a/releng/devkit-assets/frida-gumjs-example-unix.c b/releng/devkit-assets/frida-gumjs-example-unix.c
+index b80ac36..af74b5a 100644
+--- a/releng/devkit-assets/frida-gumjs-example-unix.c
++++ b/releng/devkit-assets/frida-gumjs-example-unix.c
+@@ -21,15 +21,8 @@ main (int argc,
+   backend = gum_script_backend_obtain_qjs ();
+ 
+   script = gum_script_backend_create_sync (backend, "example",
+-      "Interceptor.attach(Module.getExportByName(null, 'open'), {\n"
+-      "  onEnter(args) {\n"
+-      "    console.log(`[*] open(\"${args[0].readUtf8String()}\")`);\n"
+-      "  }\n"
+-      "});\n"
+-      "Interceptor.attach(Module.getExportByName(null, 'close'), {\n"
+-      "  onEnter(args) {\n"
+-      "    console.log(`[*] close(${args[0].toInt32()})`);\n"
+-      "  }\n"
++      "Interceptor.attach(Module.getExportByName(null, 'ptrace'), {\n"
++      "    console.log(`ptrace called\");\n"
+       "});",
+       NULL, cancellable, &error);
+   g_assert (error == NULL);
+@@ -38,8 +31,8 @@ main (int argc,
+ 
+   gum_script_load_sync (script, cancellable);
+ 
+-  close (open ("/etc/hosts", O_RDONLY));
+-  close (open ("/etc/fstab", O_RDONLY));
++  //close (open ("/etc/hosts", O_RDONLY));
++  //close (open ("/etc/fstab", O_RDONLY));
+ 
+   context = g_main_context_get_thread_default ();
+   while (g_main_context_pending (context))
+@@ -49,7 +42,7 @@ main (int argc,
+ 
+   g_object_unref (script);
+ 
+-  gum_deinit_embedded ();
++  //gum_deinit_embedded ();
+ 
+   return 0;
+ }
+@@ -59,6 +52,7 @@ on_message (const gchar * message,
+             GBytes * data,
+             gpointer user_data)
+ {
++  return;
+   JsonParser * parser;
+   JsonObject * root;
+   const gchar * type;
