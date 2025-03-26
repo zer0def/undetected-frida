@@ -14,7 +14,7 @@ jobs:
       run: |
         frida_version="$(curl -fs https://api.github.com/repos/frida/frida/releases | jq -r .[].tag_name | sort -nr | head -n1)"
         frida_version="$(curl -fs https://api.github.com/repos/frida/frida/releases/latest | jq -r .tag_name)"
-        frida_version=16.4.10
+        frida_version=16.3.3
         echo "FRIDA_VERSION=${frida_version}" >> "${GITHUB_OUTPUT}"  # gh env?
 
         release_exists=0
