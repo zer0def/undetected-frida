@@ -74,36 +74,36 @@ index eab36c49..bf61407f 100644
  
  	namespace ObjectPath {
 diff --git a/lib/base/socket.vala b/lib/base/socket.vala
-index 54fd477b..4e66ae7c 100644
+index 1ba8d338..1289f9b4 100644
 --- a/lib/base/socket.vala
 +++ b/lib/base/socket.vala
-@@ -104,7 +104,7 @@ namespace Frida {
- 		var msg = new Soup.Message ("GET", uri);
+@@ -163,7 +163,7 @@ namespace Frida {
+ 		var msg = new Soup.Message.from_uri ("GET", uri);
  		Soup.websocket_client_prepare_handshake (msg, origin, null, null);
-		msg.request_headers.replace ("Host", make_host_header_value (uri));
+ 		msg.request_headers.replace ("Host", make_host_header_value (uri));
 -		msg.request_headers.replace ("User-Agent", "Frida/" + _version_string ());
 +		msg.request_headers.replace ("User-Agent", "${FRIDA_PREFIX}/" + _version_string ());
  		msg.request_headers.foreach ((name, val) => {
  			request.append (name + ": " + val + "\r\n");
  		});
-@@ -374,7 +374,7 @@ namespace Frida {
- 		}
+@@ -577,7 +577,7 @@ namespace Frida {
  
- 		private void on_asset_request (Soup.Server server, Soup.ServerMessage msg, string path, HashTable<string, string>? query) {
--			msg.get_response_headers ().replace ("Server", "Frida/" + _version_string ());
-+			msg.get_response_headers ().replace ("Server", "${FRIDA_PREFIX}/" + _version_string ());
+ 			private void on_asset_request (Soup.Server server, Soup.ServerMessage msg, string path,
+ 					HashTable<string, string>? query) {
+-				msg.get_response_headers ().replace ("Server", "Frida/" + _version_string ());
++				msg.get_response_headers ().replace ("Server", "${FRIDA_PREFIX}/" + _version_string ());
  
- 			unowned string method = msg.get_method ();
- 			if (method != "GET" && method != "HEAD") {
-@@ -591,7 +591,7 @@ namespace Frida {
+ 				unowned string method = msg.get_method ();
+ 				if (method != "GET" && method != "HEAD") {
+@@ -794,7 +794,7 @@ namespace Frida {
  <center><h1>301 Moved Permanently</h1></center>
  <hr><center>%s</center>
  </body>
 -</html>""".printf ("Frida/" + _version_string ());
 +</html>""".printf ("${FRIDA_PREFIX}/" + _version_string ());
  
- 			if (msg.get_method () == "HEAD") {
- 				var headers = msg.get_response_headers ();
+ 				if (msg.get_method () == "HEAD") {
+ 					var headers = msg.get_response_headers ();
 diff --git a/lib/gadget/gadget-glue.c b/lib/gadget/gadget-glue.c
 index 256b8d99..079945e8 100644
 --- a/lib/gadget/gadget-glue.c
@@ -209,16 +209,16 @@ index b96edc83..2716dc31 100644
    '-DG_DISABLE_DEPRECATED',
    language: c_languages)
 diff --git a/server/server.vala b/server/server.vala
-index 525c145e..83efc98b 100644
+index 67bf4b38..ccd01037 100644
 --- a/server/server.vala
 +++ b/server/server.vala
-@@ -177,7 +178,7 @@ namespace Frida.Server {
+@@ -179,7 +179,7 @@ namespace Frida.Server {
  		Environment.configure ();
  
  #if DARWIN
 -		var worker = new Thread<int> ("frida-server-main-loop", () => {
 +		var worker = new Thread<int> ("${FRIDA_PREFIX}-server-main-loop", () => {
- 			var exit_code = run_application (endpoint_params, options, on_ready);
+ 			var exit_code = run_application (device_id, endpoint_params, options, on_ready);
  
  			_stop_run_loop ();
 diff --git a/src/agent-container.vala b/src/agent-container.vala
