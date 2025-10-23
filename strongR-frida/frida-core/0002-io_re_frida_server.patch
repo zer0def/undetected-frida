@@ -16,9 +16,17 @@ index e2d1b66d..42c86739 100644
  	private static Application application;
  
 -	private const string DEFAULT_DIRECTORY = "re.frida.server";
-+	private const string DEFAULT_DIRECTORY = "";
++	private static string DEFAULT_DIRECTORY = null;
  	private static bool output_version = false;
  	private static string? listen_address = null;
  	private static string? certpath = null;
+@@ -50,6 +50,7 @@ namespace Frida.Server {
+ 	};
+ 
+ 	private static int main (string[] args) {
++		DEFAULT_DIRECTORY = GLib.Uuid.string_random();
+ 		Environment.init ();
+ 
+ #if DARWIN
 -- 
 2.30.2
