@@ -1,0 +1,17 @@
+diff --git a/lib/base/socket.vala b/lib/base/socket.vala
+index 1ba8d338..0c8f04b2 100644
+--- a/lib/base/socket.vala
++++ b/lib/base/socket.vala
+@@ -3,10 +3,10 @@ namespace Frida {
+ 
+ 	public SocketConnectable parse_control_address (string? address, uint16 port = 0) throws Error {
+-		return parse_socket_address (address, port, "127.0.0.1", DEFAULT_CONTROL_PORT);
++		return parse_socket_address (address, port, "0.0.0.0", DEFAULT_CONTROL_PORT);
+ 	}
+ 
+ 	public SocketConnectable parse_cluster_address (string? address, uint16 port = 0) throws Error {
+-		return parse_socket_address (address, port, "127.0.0.1", DEFAULT_CLUSTER_PORT);
++		return parse_socket_address (address, port, "0.0.0.0", DEFAULT_CLUSTER_PORT);
+ 	}
+ 
+ 	public SocketConnectable parse_socket_address (string? address, uint16 port, string default_address,

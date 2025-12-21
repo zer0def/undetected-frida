@@ -1,0 +1,25 @@
+diff --git a/lib/base/socket.vala b/lib/base/socket.vala
+index 1ba8d338..065f2d09 100644
+--- a/lib/base/socket.vala
++++ b/lib/base/socket.vala
+@@ -1,5 +1,5 @@
+ namespace Frida {
+-	public const uint16 DEFAULT_CONTROL_PORT = 27042;
+-	public const uint16 DEFAULT_CLUSTER_PORT = 27052;
++	public const uint16 DEFAULT_CONTROL_PORT = 37042;
++	public const uint16 DEFAULT_CLUSTER_PORT = 37052;
+ 
+ 	public SocketConnectable parse_control_address (string? address, uint16 port = 0) throws Error {
+diff --git a/lib/gadget/gadget.vala b/lib/gadget/gadget.vala
+index 230284c7..8f0cab0a 100644
+--- a/lib/gadget/gadget.vala
++++ b/lib/gadget/gadget.vala
+@@ -202,7 +202,7 @@ namespace Frida.Gadget {
+ 		public PortConflictBehavior on_port_conflict {
+ 			get;
+ 			set;
+-			default = PortConflictBehavior.FAIL;
++			default = PortConflictBehavior.PICK_NEXT;
+ 		}
+ 
+ 		public LoadBehavior on_load {
