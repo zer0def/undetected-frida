@@ -38,6 +38,7 @@ jobs:
       id: create
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        FRIDA_VERSION: ${{ needs.check.outputs.FRIDA_VERSION }}
       run: |
         # might need to use bash arrays for adequate DRY quotation?
         curl_args="-fs -H 'Authorization: token ${GITHUB_TOKEN}'"
@@ -45,7 +46,14 @@ jobs:
         upload_args="${curl_args} -H 'Content-Type: application/octet-stream' -o /dev/null --data-binary @-"  # cat | curl --data-binary
 
         tmpfile="$(mktemp)"  # a bit excessive, but eh
-        echo '{"tag_name":"${{ needs.check.outputs.FRIDA_VERSION }}","name":"${{ needs.check.outputs.FRIDA_VERSION }}","body":"${{ needs.check.outputs.FRIDA_VERSION }}","draft":true}' | curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d@- "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases" >"${tmpfile}"
+        curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d@- "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases" <<EOF >"${tmpfile}"
+        {
+          "tag_name":"${FRIDA_VERSION}",
+          "name":"${FRIDA_VERSION}",
+          "body":"${FRIDA_VERSION}",
+          "draft":true
+        }
+        EOF
 
         echo "RELEASE_ID=$(jq -r .id "${tmpfile}")" >> "${GITHUB_OUTPUT}"
         #echo "UPLOAD_URL=$(jq -r .upload_url "${tmpfile}")" >> "${GITHUB_OUTPUT}"
@@ -71,27 +79,29 @@ jobs:
         - android
         #target: ["core", "gum"]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+      with:
+        persist-credentials: false
 
     - name: Node 18 setup
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5.0.0
       with:
         node-version: 18
 
     - name: JDK 8 setup
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654  # v5.0.2
       with:
         java-version: "8"
         distribution: temurin
 
     - name: Python 3.14 setup
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
       with:
         python-version: '3.14'
 
     - name: NDK 29 setup
       run: |
-        curl -sSLO https://dl.google.com/android/repository/android-ndk-r29-linux.zip
+        curl -fsSLO https://dl.google.com/android/repository/android-ndk-r29-linux.zip
         [ "$(sha1sum android-ndk-r29-linux.zip | awk '{print $1}')" = "87e2bb7e9be5d6a1c6cdf5ec40dd4e0c6d07c30b" ] || exit 1
         unzip -qo android-ndk-r29-linux.zip; rm android-ndk-r29-linux.zip; [ $(id -u) -eq 0 ] || SUDO=sudo
         export ANDROID_NDK="${ANDROID_NDK:-/usr/local/lib/android/sdk/ndk/29.0.14206865}"
@@ -109,10 +119,11 @@ jobs:
         fi
 
     - name: Build Frida
+      env:
+        FRIDA_VERSION: ${{ needs.check.outputs.FRIDA_VERSION }}
       run: |
         export ANDROID_NDK="${ANDROID_NDK:-/usr/local/lib/android/sdk/ndk/29.0.14206865}"
         export ANDROID_NDK="${ANDROID_NDK%/*}/29.0.14206865"; export ANDROID_NDK_HOME="${ANDROID_NDK}" ANDROID_NDK_ROOT="${ANDROID_NDK}" ANDROID_NDK_LATEST_HOME="${ANDROID_NDK}"
-        FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
         git clone --recurse-submodules https://github.com/frida/frida -b "${FRIDA_VERSION}"; pushd frida
 
         set +e
@@ -131,9 +142,10 @@ jobs:
     - name: Ship artifacts
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        FRIDA_VERSION: ${{ needs.check.outputs.FRIDA_VERSION }}
+        RELEASE_ID: ${{ needs.create.outputs.RELEASE_ID }}
       run: |
-        FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
-        gh_release_put(){ curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/octet-stream" -o /dev/null --data-binary "@${1}" "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ needs.create.outputs.RELEASE_ID }}/assets?name=${2}"; }
+        gh_release_put(){ curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/octet-stream" -o /dev/null --data-binary "@${1}" "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=${2}"; }
 
         export XZ_OPT="-9e -T0" ZSTD_NBTHREADS=0 ZSTD_CLEVEL=19
         ZSTD_OPT="-${ZSTD_CLEVEL:-22} --ultra -T${ZSTD_NBTHREADS:-0}" LZIP_OPT="-n$(nproc) -9" PIGZ="-p$(nproc) -11"  # GZIP="-9" PIGZ="${GZIP}"
@@ -180,7 +192,7 @@ jobs:
         popd
 
     - name: Pass artifacts for modules
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6.0.0
       with:
         name: frida-artifacts-${{ matrix.arch }}
         path: |
@@ -198,9 +210,11 @@ jobs:
     - build
     if: needs.check.outputs.RELEASE_EXISTS == '0'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+      with:
+        persist-credentials: false
     - name: Pass artifacts for Magisk module
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
       with:
         path: frida-artifacts
         pattern: '*'
@@ -208,14 +222,15 @@ jobs:
     - name: Assemble modules and publish release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        FRIDA_VERSION: ${{ needs.check.outputs.FRIDA_VERSION }}
+        RELEASE_ID: ${{ needs.create.outputs.RELEASE_ID }}
       run: |
-        FRIDA_VERSION="${{ needs.check.outputs.FRIDA_VERSION }}"
-        gh_release_put(){ curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/octet-stream" -o /dev/null --data-binary "@${1}" "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ needs.create.outputs.RELEASE_ID }}/assets?name=${2}"; }
+        gh_release_put(){ curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/octet-stream" -o /dev/null --data-binary "@${1}" "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=${2}"; }
 
         zy_dir="$(mktemp -d)"
         zy_ver="$(curl -fs https://api.github.com/repos/lico-n/ZygiskFrida/releases/latest | jq -r .tag_name)"
         for j in zygisk- riru-; do
-          curl -sSLo "${j%-}.zip" "https://github.com/lico-n/ZygiskFrida/releases/download/${zy_ver}/ZygiskFrida-${zy_ver}-${j%zygisk-}release.zip"
+          curl -fsSLo "${j%-}.zip" "https://github.com/lico-n/ZygiskFrida/releases/download/${zy_ver}/ZygiskFrida-${zy_ver}-${j%zygisk-}release.zip"
           pushd "${zy_dir}"; unzip -qo "${OLDPWD}/${j%-}.zip"
           for i in "${OLDPWD}/frida-artifacts/libgadget"*.so*; do
             _target="gadget/$(basename "${i/86_/}")"
@@ -257,4 +272,4 @@ jobs:
         gh_release_put "${OLDPWD}/magisk.zip" "${GITHUB_REPOSITORY##*/}-magisk-${FRIDA_VERSION}.zip"
         popd
 
-        echo '{"draft":false}' | curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d@- -o /dev/null -XPATCH "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ needs.create.outputs.RELEASE_ID }}"
+        echo '{"draft":false}' | curl -fs -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" -d@- -o /dev/null -XPATCH "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}"
